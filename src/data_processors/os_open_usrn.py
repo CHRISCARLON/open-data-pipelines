@@ -8,20 +8,27 @@ from shapely import wkt
 from shapely.geometry import shape
 from loguru import logger
 from tqdm import tqdm
+import time
 
 
 def insert_into_motherduck(df, conn, schema: str, table: str):
     """
-    Processes dataframe into MotherDuck table
+    Processes dataframe into MotherDuck table with retry logic
 
     Args:
-        Dataframe
-        Connection object
-        Schema name
-        Table name
+        df: DataFrame to insert
+        conn: Connection object
+        schema: Schema name
+        table: Table name
     """
+    max_retries = 3
+    base_delay = 3
 
-    if conn:
+    if not conn:
+        logger.error("No connection provided")
+        return None
+
+    for attempt in range(max_retries):
         try:
             logger.info(f"Attempting to insert into schema: {schema}, table: {table}")
 
@@ -35,10 +42,29 @@ def insert_into_motherduck(df, conn, schema: str, table: str):
                 )
 
             conn.execute(insert_sql)
+            
+            if attempt > 0:
+                logger.success(f"Successfully inserted data on attempt {attempt + 1}")
+                
             logger.success(f"Inserted {len(df)} rows into {schema}.{table}")
+            return None
+
         except Exception as e:
-            logger.error(f"Error inserting DataFrame into DuckDB: {e}")
-            raise
+            # Clean up registration
+            try:
+                conn.unregister("df_temp")
+            except Exception:
+                pass
+                
+            if attempt < max_retries - 1:
+                wait_time = (2**attempt) * base_delay
+                logger.warning(f"Attempt {attempt + 1} failed: {e}")
+                logger.info(f"Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+            else:
+                logger.error(f"All {max_retries} attempts failed. Final error: {e}")
+                raise
+    
     return None
 
 

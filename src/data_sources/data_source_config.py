@@ -35,6 +35,10 @@ class DataSourceType(Enum):
         "os_usrn_uprn",
         "https://api.os.uk/downloads/v1/products/LIDS/downloads",
     )
+    BDUK_PREMISES = (
+        "bduk_premises",
+        "https://www.gov.uk/government/publications/premises-in-bduk-plans-england-and-wales",
+    )
     # Add other data sources as needed
 
     def __init__(self, code: str, base_url: str):
@@ -77,7 +81,7 @@ class DataSourceConfig(Protocol):
         ...
 
     @property
-    def download_links(self) -> list[str]:
+    def download_links(self) -> list[str] | dict:
         """Get the download links for the configured data source"""
         ...
 
@@ -87,7 +91,7 @@ class DataSourceConfig(Protocol):
         ...
 
     @property
-    def table_names(self) -> list[str]:
+    def table_names(self) -> list[str] | dict:
         """Get the table names for the configured data source"""
         ...
 

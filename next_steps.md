@@ -1,38 +1,5 @@
 # Reminder of what needs to be done
 
-Model for impact scores
-
-Completing v0.1.2
-
-I'll create a clear summary of this dbt model that calculates impact scores for road works in England.
-
-## REDO The Processing Code
-
-- Make it more modular and flexible
-
-NEW WAY (IN PROGRESS BUT A LOT CLEANER)
-
-```python
-from data_sources.street_manager import StreetManager
-from database.motherduck import MotherDuckManager
-from data_processors.street_manager import process_data
-
-def main():
-    # MotherDuck credentials
-    token = ""
-    database = ""
-
-    # Create all the configurations
-    street_manager_config_latest = StreetManager.create_default_latest()
-
-    # Process the data
-    with MotherDuckManager(token, database) as motherduck_manager:
-        motherduck_manager.setup_for_data_source(street_manager_config_latest)
-        process_data(street_manager_config_latest.download_links[0], 150000, motherduck_manager, street_manager_config_latest.schema_name, street_manager_config_latest.table_names[0])
-
-if __name__ == "__main__":
-    main()
-```
 
 ## Impact Scores Model
 

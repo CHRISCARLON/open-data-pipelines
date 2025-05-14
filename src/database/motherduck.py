@@ -16,7 +16,7 @@ class MotherDuckManager(DatabaseProtocol):
 
     def __init__(self, token: str, database: str):
         """
-        Initialize the MotherDuck manager.
+        Initialise the MotherDuck manager.
 
         Args:
             token: MotherDuck authentication token

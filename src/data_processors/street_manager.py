@@ -2,6 +2,7 @@ import json
 import pyarrow as pa
 from typing import Iterator, Any
 import requests
+import time
 
 from stream_unzip import stream_unzip
 from loguru import logger
@@ -28,36 +29,41 @@ def insert_table_to_motherduck(
     table: pa.Table, conn, schema: str, table_name: str
 ) -> None:
     """
-    Inserts a PyArrow table into a MotherDuck table.
-
-    Args:
-        table: The PyArrow Table to be inserted
-        conn: The MotherDuck connection
-        schema: The schema of the table
-        table_name: The name of the table
+    Inserts a PyArrow table into a MotherDuck table with retry logic.
     """
-    try:
-        # Register the PyArrow table with DuckDB
-        # Use a different name than 'table' to avoid SQL keyword conflicts
-        conn.register("input_data", table)
+    max_retries = 3
+    base_delay = 3
+    
+    for attempt in range(max_retries):
+        try:
+            conn.register("input_data", table)
+            
+            column_names = table.column_names
+            columns_sql = ", ".join([f'"{name}"' for name in column_names])
+            
+            placeholders = ", ".join([f"input_data.{name}" for name in column_names])
+            
+            insert_sql = f"""INSERT INTO "{schema}"."{table_name}" ({columns_sql}) 
+                            SELECT {placeholders} FROM input_data"""
 
-        # Get column names from the table
-        column_names = table.column_names
-        columns_sql = ", ".join([f'"{name}"' for name in column_names])
-
-        # Use the registered name instead of 'table'
-        placeholders = ", ".join([f"input_data.{name}" for name in column_names])
-
-        # Create SQL insert statement
-        insert_sql = f"""INSERT INTO "{schema}"."{table_name}" ({columns_sql}) 
-                        SELECT {placeholders} FROM input_data"""
-
-        # Execute SQL statement
-        conn.execute(insert_sql)
-        logger.success(f"Inserted {len(table)} rows into {schema}.{table_name}")
-    except Exception as e:
-        logger.error(f"Error inserting PyArrow Table into DuckDB: {e}")
-        raise
+            conn.execute(insert_sql)
+            logger.success(f"Inserted {len(table)} rows into {schema}.{table_name}")
+            return
+            
+        except Exception as e:
+            try:
+                conn.unregister("input_data")
+            except Exception:
+                pass
+                
+            if "lease expired" in str(e) and attempt < max_retries - 1:
+                wait_time = (2**attempt) * base_delay
+                logger.warning(f"Connection lease expired (attempt {attempt+1}): {e}")
+                logger.info(f"Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+            else:
+                logger.error(f"Error inserting PyArrow Table into DuckDB: {e}")
+                raise
 
 
 def flatten_json(json_data) -> dict:

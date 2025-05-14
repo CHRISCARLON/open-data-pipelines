@@ -1,12 +1,12 @@
-# Open Street Works Data Pipeline 🚙
+# Open Street Works 🚙
 
-A data pipeline for processing UK street works/Ordnance Survey data.
+Data pipelines for processing and analysing UK street works.
 
 ## Overview
 
 This project automates the extraction, loading, and transformation (ELT) of data from:
 
-- Street Manager
+- Street Manager (Street Works for England only)
 - Ordnance Survey Linked Identifiers
 - Ordnance Survey Open USRNs
 - Geoplace SWA Codes

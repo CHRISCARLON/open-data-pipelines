@@ -247,6 +247,18 @@ class StreetManager(DataSourceConfig):
         )
 
     @classmethod
+    def create_default_historic_2025(cls) -> "StreetManager":
+        """Create a default Street Manager configuration."""
+        return cls(
+            processor_type=DataProcessorType.MOTHERDUCK,
+            time_range=TimeRange.HISTORIC,
+            batch_limit=150000,
+            year=2025,
+            start_month=3,
+            end_month=5,
+        )
+    
+    @classmethod
     def create_default_historic_2024(cls) -> "StreetManager":
         """Create a default Street Manager configuration."""
         return cls(
@@ -284,5 +296,5 @@ class StreetManager(DataSourceConfig):
 
 
 if __name__ == "__main__":
-    config = StreetManager.create_default_latest()
-    print(config.download_links)
+    config = StreetManager.create_default_historic_2025()
+    print(config)
