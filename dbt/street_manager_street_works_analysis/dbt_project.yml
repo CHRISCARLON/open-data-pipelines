@@ -30,8 +30,9 @@ clean-targets:
 # files using the `{{ config(...) }}` macro.
 
 vars:
-  year: "{{ (run_started_at - modules.datetime.timedelta(days=32)).strftime('%Y') }}"
-  month: "{{ (run_started_at - modules.datetime.timedelta(days=32)).strftime('%m') }}"
+  # Go back two months from run date to get the month being archived
+  year: "{{ (run_started_at - modules.datetime.timedelta(days=63)).strftime('%Y') }}"
+  month: "{{ (run_started_at - modules.datetime.timedelta(days=63)).strftime('%m') }}"
 
 models:
   street_manager_street_works_analysis:
@@ -54,8 +55,10 @@ models:
       usrn_permit_details_london:
     collab_overview:
       collab_overview_england:
+      collab_overview_england_2024:
     emergency_works:
       emergency_works_overview_england:
+      emergency_works_overview_england_2024:
     new_connections:
       new_connections_england:
       new_connections_2024:
