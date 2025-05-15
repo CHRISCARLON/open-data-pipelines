@@ -7,6 +7,8 @@ from auth.creds import secret_name
 from data_sources.street_manager import StreetManager
 from data_processors.street_manager import process_data as process_street_manager
 
+from data_sources.bduk_premises import BDUKPremises
+from data_processors.bduk_premises import process_bduk
 
 def main():
     # MotherDuck Credentials
@@ -15,28 +17,19 @@ def main():
     database = "sm_permit"
 
     # Create Data Source Configs
-    street_manager_config = StreetManager.create_default_historic_2025()
-
-    logger.info(f"street_manager_config: {street_manager_config}")
+    bduk_premises_config = BDUKPremises.create_default_latest()
+    logger.info(f"bduk_premises_config: {bduk_premises_config}")
 
     with MotherDuckManager(token, database) as motherduck_manager:
-        motherduck_manager.setup_for_data_source(street_manager_config)
-        
-        # Process all download links and table names
-        for url, table_name in zip(street_manager_config.download_links, street_manager_config.table_names):
-            logger.info(f"Processing {table_name}")
-            try:
-                process_street_manager(
-                    url=url,
-                    batch_size=street_manager_config.batch_limit or 150000,
-                    conn=motherduck_manager.connection,
-                    schema_name=street_manager_config.schema_name,
-                    table_name=table_name,
-                )
-            except Exception as e:
-                logger.error(f"Failed to process {table_name}: {e}")
-                # Continue with next file
-                continue
+        motherduck_manager.setup_for_data_source(bduk_premises_config)
+        process_bduk(
+            download_links=bduk_premises_config.download_links,
+            table_names=bduk_premises_config.table_names,
+            batch_size=bduk_premises_config.batch_limit or 150000,
+            conn=motherduck_manager.connection,
+            schema_name=bduk_premises_config.schema_name,
+            expected_columns=bduk_premises_config.db_template,
+        )
 
 
 if __name__ == "__main__":
