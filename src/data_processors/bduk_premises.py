@@ -59,36 +59,40 @@ def insert_into_motherduck(df: pd.DataFrame, conn, schema: str, table: str) -> b
     return False
 
 
-def validate_column_names(header: List[str], expected_columns: Dict[str, str]) -> Tuple[bool, List[str]]:
+def validate_column_names(
+    header: List[str], expected_columns: Dict[str, str]
+) -> Tuple[bool, List[str]]:
     """
     Validate that CSV header matches expected columns
-    
+
     Args:
         header: List of column names from CSV
         expected_columns: Dict of expected column names and types
-    
+
     Returns:
         (is_valid, list_of_issues)
     """
     expected_names = set(expected_columns.keys())
     actual_names = set(header)
-    
+
     issues = []
-    
+
     # Check for missing columns
     missing = expected_names - actual_names
     if missing:
         issues.append(f"Missing columns: {', '.join(sorted(missing))}")
-    
+
     # Check for extra columns
     extra = actual_names - expected_names
     if extra:
         issues.append(f"Unexpected columns: {', '.join(sorted(extra))}")
-    
+
     return len(issues) == 0, issues
 
 
-def stream_csv_from_zip(zip_url: str, batch_size: int, expected_columns: Optional[Dict[str, str]] = None) -> Iterator[pd.DataFrame]:
+def stream_csv_from_zip(
+    zip_url: str, batch_size: int, expected_columns: Optional[Dict[str, str]] = None
+) -> Iterator[pd.DataFrame]:
     """
     Stream CSV data from a ZIP file with optional column validation.
 
@@ -110,15 +114,24 @@ def stream_csv_from_zip(zip_url: str, batch_size: int, expected_columns: Optiona
         total_size = int(response.headers.get("content-length", 0))
 
         # Stream data
-        with tqdm(total=total_size, unit="B", unit_scale=True, desc="Streaming") as pbar:
+        with tqdm(
+            total=total_size, unit="B", unit_scale=True, desc="Streaming"
+        ) as pbar:
+
             def chunked_response():
                 for chunk in response.iter_content(chunk_size=1048576):
                     pbar.update(len(chunk))
                     yield chunk
 
             # Process ZIP as it streams
-            for file_name, file_size, unzipped_chunks in stream_unzip(chunked_response()):
-                file_name_str = file_name.decode("utf-8") if isinstance(file_name, bytes) else file_name
+            for file_name, file_size, unzipped_chunks in stream_unzip(
+                chunked_response()
+            ):
+                file_name_str = (
+                    file_name.decode("utf-8")
+                    if isinstance(file_name, bytes)
+                    else file_name
+                )
 
                 # Only process CSV files
                 if file_name_str.lower().endswith(".csv"):
@@ -142,21 +155,29 @@ def stream_csv_from_zip(zip_url: str, batch_size: int, expected_columns: Optiona
 
                             if header is None:
                                 header = next(csv.reader([line]))
-                                
+
                                 # Validate columns if expected_columns provided
                                 if expected_columns:
-                                    is_valid, issues = validate_column_names(header, expected_columns)
-                                    
+                                    is_valid, issues = validate_column_names(
+                                        header, expected_columns
+                                    )
+
                                     if not is_valid:
-                                        logger.error(f"Column validation failed for {file_name_str}:")
+                                        logger.error(
+                                            f"Column validation failed for {file_name_str}:"
+                                        )
                                         for issue in issues:
                                             logger.error(f"  - {issue}")
-                                        
+
                                         # Raise error to skip this file
-                                        raise ValueError(f"Invalid columns in {file_name_str}")
+                                        raise ValueError(
+                                            f"Invalid columns in {file_name_str}"
+                                        )
                                     else:
-                                        logger.info(f"✓ Column validation passed for {file_name_str}")
-                                
+                                        logger.info(
+                                            f"✓ Column validation passed for {file_name_str}"
+                                        )
+
                             else:
                                 try:
                                     values = next(csv.reader([line]))
@@ -169,7 +190,9 @@ def stream_csv_from_zip(zip_url: str, batch_size: int, expected_columns: Optiona
                                             df_batch = pd.DataFrame(row_buffer)
                                             yield df_batch
                                             row_buffer = []
-                                            logger.debug(f"Yielded batch of {batch_size} rows")
+                                            logger.debug(
+                                                f"Yielded batch of {batch_size} rows"
+                                            )
                                 except csv.Error as e:
                                     logger.warning(f"Error parsing CSV line: {e}")
                                     continue
@@ -196,8 +219,12 @@ def stream_csv_from_zip(zip_url: str, batch_size: int, expected_columns: Optiona
 
 
 def process_streaming_data(
-    url: str, batch_size: int, conn, schema_name: str, table_name: str, 
-    expected_columns: Optional[Dict[str, str]] = None
+    url: str,
+    batch_size: int,
+    conn,
+    schema_name: str,
+    table_name: str,
+    expected_columns: Optional[Dict[str, str]] = None,
 ) -> None:
     """
     Process CSV data from ZIP URL using true streaming.

@@ -257,7 +257,7 @@ class StreetManager(DataSourceConfig):
             start_month=3,
             end_month=5,
         )
-    
+
     @classmethod
     def create_default_historic_2024(cls) -> "StreetManager":
         """Create a default Street Manager configuration."""

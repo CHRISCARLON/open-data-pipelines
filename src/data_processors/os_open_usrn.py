@@ -42,10 +42,10 @@ def insert_into_motherduck(df, conn, schema: str, table: str):
                 )
 
             conn.execute(insert_sql)
-            
+
             if attempt > 0:
                 logger.success(f"Successfully inserted data on attempt {attempt + 1}")
-                
+
             logger.success(f"Inserted {len(df)} rows into {schema}.{table}")
             return None
 
@@ -55,7 +55,7 @@ def insert_into_motherduck(df, conn, schema: str, table: str):
                 conn.unregister("df_temp")
             except Exception:
                 pass
-                
+
             if attempt < max_retries - 1:
                 wait_time = (2**attempt) * base_delay
                 logger.warning(f"Attempt {attempt + 1} failed: {e}")
@@ -64,7 +64,7 @@ def insert_into_motherduck(df, conn, schema: str, table: str):
             else:
                 logger.error(f"All {max_retries} attempts failed. Final error: {e}")
                 raise
-    
+
     return None
 
 

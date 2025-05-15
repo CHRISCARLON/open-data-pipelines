@@ -33,29 +33,29 @@ def insert_table_to_motherduck(
     """
     max_retries = 3
     base_delay = 3
-    
+
     for attempt in range(max_retries):
         try:
             conn.register("input_data", table)
-            
+
             column_names = table.column_names
             columns_sql = ", ".join([f'"{name}"' for name in column_names])
-            
+
             placeholders = ", ".join([f"input_data.{name}" for name in column_names])
-            
+
             insert_sql = f"""INSERT INTO "{schema}"."{table_name}" ({columns_sql}) 
                             SELECT {placeholders} FROM input_data"""
 
             conn.execute(insert_sql)
             logger.success(f"Inserted {len(table)} rows into {schema}.{table_name}")
             return
-            
+
         except Exception as e:
             try:
                 conn.unregister("input_data")
             except Exception:
                 pass
-                
+
             if "lease expired" in str(e) and attempt < max_retries - 1:
                 wait_time = (2**attempt) * base_delay
                 logger.warning(f"Connection lease expired (attempt {attempt+1}): {e}")

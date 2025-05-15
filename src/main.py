@@ -4,11 +4,10 @@ from loguru import logger
 from auth.get_credentials import get_secrets
 from auth.creds import secret_name
 
-from data_sources.street_manager import StreetManager
-from data_processors.street_manager import process_data as process_street_manager
 
 from data_sources.bduk_premises import BDUKPremises
 from data_processors.bduk_premises import process_bduk
+
 
 def main():
     # MotherDuck Credentials
