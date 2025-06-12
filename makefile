@@ -26,11 +26,11 @@ docker-verify:
 	aws ecr describe-images --repository-name $(REPO_NAME) --region $(REGION)
 
 # Git section
-.PHONY: git-all git-add git-commit git-push
+.PHONY: update git-add git-commit git-push
 
 DATE := $(shell date +%Y-%m-%d)
 
-git-all: git-add git-commit git-push
+update: git-add git-commit git-push
 
 git-add:
 	git add .
