@@ -156,6 +156,29 @@ SELECT
     network_scoring.network_importance_factor,
     -- Weighted impact calculation
     raw_impact_level.total_impact_level * (1 + network_scoring.network_importance_factor) as weighted_impact_level,
+    
+    -- Normalise to 1-100 scale using min-max normalization
+    CASE 
+        WHEN MAX(raw_impact_level.total_impact_level * (1 + network_scoring.network_importance_factor)) OVER () = 
+             MIN(raw_impact_level.total_impact_level * (1 + network_scoring.network_importance_factor)) OVER () 
+        THEN 50.0  -- If all values are the same, assign middle value
+        ELSE 1 + (99 * 
+            (raw_impact_level.total_impact_level * (1 + network_scoring.network_importance_factor) - 
+             MIN(raw_impact_level.total_impact_level * (1 + network_scoring.network_importance_factor)) OVER ()) / 
+            NULLIF(MAX(raw_impact_level.total_impact_level * (1 + network_scoring.network_importance_factor)) OVER () - 
+                   MIN(raw_impact_level.total_impact_level * (1 + network_scoring.network_importance_factor)) OVER (), 0)
+        )
+    END AS impact_index_score,
+    
+    -- Create categorical impact levels for easier interpretation
+    CASE 
+        WHEN impact_index_score >= 80 THEN 'Critical'
+        WHEN impact_index_score >= 60 THEN 'High'
+        WHEN impact_index_score >= 40 THEN 'Medium'
+        WHEN impact_index_score >= 20 THEN 'Low'
+        ELSE 'Minimal'
+    END AS impact_category,
+    
     {{ current_timestamp() }} AS date_processed
 FROM
     raw_impact_level
