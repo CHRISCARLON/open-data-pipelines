@@ -233,38 +233,10 @@ SELECT
     END AS highway_authority_impact_score,
     -- Create categorical impact levels based on the normalized score
     CASE 
-        WHEN CASE 
-                WHEN MAX(SUM(uwi.weighted_impact_level)) OVER () = MIN(SUM(uwi.weighted_impact_level)) OVER () 
-                THEN 50.0
-                ELSE 1 + (99 * 
-                    (SUM(uwi.weighted_impact_level) - MIN(SUM(uwi.weighted_impact_level)) OVER ()) / 
-                    NULLIF(MAX(SUM(uwi.weighted_impact_level)) OVER () - MIN(SUM(uwi.weighted_impact_level)) OVER (), 0)
-                )
-             END >= 80 THEN 'Critical'
-        WHEN CASE 
-                WHEN MAX(SUM(uwi.weighted_impact_level)) OVER () = MIN(SUM(uwi.weighted_impact_level)) OVER () 
-                THEN 50.0
-                ELSE 1 + (99 * 
-                    (SUM(uwi.weighted_impact_level) - MIN(SUM(uwi.weighted_impact_level)) OVER ()) / 
-                    NULLIF(MAX(SUM(uwi.weighted_impact_level)) OVER () - MIN(SUM(uwi.weighted_impact_level)) OVER (), 0)
-                )
-             END >= 60 THEN 'High'
-        WHEN CASE 
-                WHEN MAX(SUM(uwi.weighted_impact_level)) OVER () = MIN(SUM(uwi.weighted_impact_level)) OVER () 
-                THEN 50.0
-                ELSE 1 + (99 * 
-                    (SUM(uwi.weighted_impact_level) - MIN(SUM(uwi.weighted_impact_level)) OVER ()) / 
-                    NULLIF(MAX(SUM(uwi.weighted_impact_level)) OVER () - MIN(SUM(uwi.weighted_impact_level)) OVER (), 0)
-                )
-             END >= 40 THEN 'Medium'
-        WHEN CASE 
-                WHEN MAX(SUM(uwi.weighted_impact_level)) OVER () = MIN(SUM(uwi.weighted_impact_level)) OVER () 
-                THEN 50.0
-                ELSE 1 + (99 * 
-                    (SUM(uwi.weighted_impact_level) - MIN(SUM(uwi.weighted_impact_level)) OVER ()) / 
-                    NULLIF(MAX(SUM(uwi.weighted_impact_level)) OVER () - MIN(SUM(uwi.weighted_impact_level)) OVER (), 0)
-                )
-             END >= 20 THEN 'Low'
+        WHEN NTILE(5) OVER (ORDER BY SUM(uwi.weighted_impact_level) DESC) = 1 THEN 'Critical'
+        WHEN NTILE(5) OVER (ORDER BY SUM(uwi.weighted_impact_level) DESC) = 2 THEN 'High'
+        WHEN NTILE(5) OVER (ORDER BY SUM(uwi.weighted_impact_level) DESC) = 3 THEN 'Medium'
+        WHEN NTILE(5) OVER (ORDER BY SUM(uwi.weighted_impact_level) DESC) = 4 THEN 'Low'
         ELSE 'Minimal'
     END AS impact_category,
     -- Network characteristics 
