@@ -70,33 +70,34 @@ Each permit record is assigned a base impact level, calculated as the sum of:
 
 ---
 
-### Normalization and Final Impact Index Calculation
+### Normalisation and Final Impact Index Calculation
 
-#### 5. Min-Max Normalization
+#### 5. Percentile-Based Normalization
 
-- The weighted impact levels are normalised across all records using min-max normalization:
+- The weighted impact levels are normalised using percentile ranking rather than min-max normalisation:
   ```
-  impact_index_score = 1 + 99 * (weighted_impact_level - min) / (max - min)
+  impact_index_score = PERCENT_RANK() OVER (ORDER BY weighted_impact_level) * 100
   ```
-- This scales all scores to a 1–100 range, where 1 represents the lowest observed impact and 100 the highest.
-- If all weighted impact levels are identical, a default score of 50 is assigned to all records.
+- This scales all scores to a 0-100 range based on their relative position in the distribution.
+- This approach is more robust to outliers than min-max normalization and creates a uniform distribution of scores.
 
-#### 6. Categorization
+#### 6. Categorisation
 
 - The normalised impact index score is mapped to a categorical label for easier interpretation:
-  - 80–100: Critical
-  - 60–79: High
-  - 40–59: Medium
-  - 20–39: Low
-  - 1–19: Minimal
+  - 95-100: Severe (top 5% most impactful)
+  - 75-94: High (next 20%)
+  - 50-74: Moderate (middle 25%)
+  - 25-49: Low (next 25%)
+  - 0-24: Minimal (bottom 25%)
 
 ---
 
 ### How the Normalized Values Interact
 
 - The **network importance factor** acts as a multiplier, increasing the impact of works in more critical areas before the final normalisation.
-- The **min-max normalisation** ensures that the final index is relative, highlighting the most and least impactful works in the current dataset.
-- This two-stage normalisation process ensures that both the local context (street-level impact) and the broader network context (authority-level importance) are reflected in the final impact index score.
+- The **percentile-based normalisation** ensures that the final index reflects the relative ranking of impacts, making it resistant to outliers and providing better differentiation across the entire range - in the past outliers were skewing the results (such as Surrey County Council)
+- This approach means a score of 90 indicates an impact higher than 90% of all other streets/authorities.
+- This two-stage process ensures that both the local context (individual usrn impact) and the broader network context (highway authority level importance) are reflected in the final impact index score.
 
 ---
 
@@ -108,6 +109,6 @@ The final model produces a table with:
 - UPRN count
 - Raw and weighted impact scores
 - Network metrics (road length, traffic flow, density, network importance factor)
-- Normalised impact index score (1–100)
-- Impact category (Critical, High, Medium, Low, Minimal)
+- Normalised impact index score (0-100)
+- Impact category (Severe, High, Moderate, Low, Minimal)
 - Processing timestamp

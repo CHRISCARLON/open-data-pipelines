@@ -159,24 +159,16 @@ WITH
             raw_impact_level.total_impact_level * (1 + COALESCE(network_scoring.network_importance_factor, 0)) as weighted_impact_level,
             
             -- Normalise to 1-100 scale using min-max normalization
-            CASE 
-                WHEN MAX(raw_impact_level.total_impact_level * (1 + COALESCE(network_scoring.network_importance_factor, 0))) OVER () = 
-                     MIN(raw_impact_level.total_impact_level * (1 + COALESCE(network_scoring.network_importance_factor, 0))) OVER () 
-                THEN 50.0  -- If all values are the same, assign middle value
-                ELSE 1 + (99 * 
-                    (raw_impact_level.total_impact_level * (1 + COALESCE(network_scoring.network_importance_factor, 0)) - 
-                     MIN(raw_impact_level.total_impact_level * (1 + COALESCE(network_scoring.network_importance_factor, 0))) OVER ()) / 
-                    NULLIF(MAX(raw_impact_level.total_impact_level * (1 + COALESCE(network_scoring.network_importance_factor, 0))) OVER () - 
-                           MIN(raw_impact_level.total_impact_level * (1 + COALESCE(network_scoring.network_importance_factor, 0))) OVER (), 0)
-                )
-            END AS impact_index_score,
-            
+            PERCENT_RANK() OVER (
+                ORDER BY raw_impact_level.total_impact_level * (1 + COALESCE(network_scoring.network_importance_factor, 0))
+            ) * 100 AS impact_index_score,
+                        
             -- Create categorical impact levels for easier interpretation
             CASE 
-                WHEN impact_index_score >= 80 THEN 'Critical'
-                WHEN impact_index_score >= 60 THEN 'High'
-                WHEN impact_index_score >= 40 THEN 'Medium'
-                WHEN impact_index_score >= 20 THEN 'Low'
+                WHEN impact_index_score >= 95 THEN 'Severe'
+                WHEN impact_index_score >= 75 THEN 'High'
+                WHEN impact_index_score >= 50 THEN 'Moderate'
+                WHEN impact_index_score >= 25 THEN 'Low'
                 ELSE 'Minimal'
             END AS impact_category
         FROM
@@ -222,21 +214,14 @@ SELECT
     MIN(uwi.weighted_impact_level) AS min_weighted_impact_level,
     SUM(uwi.impact_index_score) AS total_impact_index_score,
     AVG(uwi.impact_index_score) AS avg_impact_index_score,
-    -- Normalize total weighted impact to 0-100 scale
+    -- Normalie total weighted impact to 0-100 scale
+    PERCENT_RANK() OVER (ORDER BY SUM(uwi.weighted_impact_level)) * 100 AS highway_authority_impact_score,
+    -- Create categorical impact levels based on the normalised score
     CASE 
-        WHEN MAX(SUM(uwi.weighted_impact_level)) OVER () = MIN(SUM(uwi.weighted_impact_level)) OVER () 
-        THEN 50.0  -- If all values are the same, assign middle value
-        ELSE 1 + (99 * 
-            (SUM(uwi.weighted_impact_level) - MIN(SUM(uwi.weighted_impact_level)) OVER ()) / 
-            NULLIF(MAX(SUM(uwi.weighted_impact_level)) OVER () - MIN(SUM(uwi.weighted_impact_level)) OVER (), 0)
-        )
-    END AS highway_authority_impact_score,
-    -- Create categorical impact levels based on the normalized score
-    CASE 
-        WHEN NTILE(5) OVER (ORDER BY SUM(uwi.weighted_impact_level) DESC) = 1 THEN 'Critical'
-        WHEN NTILE(5) OVER (ORDER BY SUM(uwi.weighted_impact_level) DESC) = 2 THEN 'High'
-        WHEN NTILE(5) OVER (ORDER BY SUM(uwi.weighted_impact_level) DESC) = 3 THEN 'Medium'
-        WHEN NTILE(5) OVER (ORDER BY SUM(uwi.weighted_impact_level) DESC) = 4 THEN 'Low'
+        WHEN highway_authority_impact_score >= 95 THEN 'Severe'
+        WHEN highway_authority_impact_score >= 75 THEN 'High'
+        WHEN highway_authority_impact_score >= 50 THEN 'Moderate'
+        WHEN highway_authority_impact_score >= 25 THEN 'Low'
         ELSE 'Minimal'
     END AS impact_category,
     -- Network characteristics 
