@@ -1,31 +1,26 @@
-# Open Street Works 🚙
+# Open Infrastructure 🚙
 
-Data pipelines for processing and analysing UK street works.
+Data pipelines for analysts working with UK infrastructure data.
 
 ## Overview
 
-This project automates the extraction, loading, and transformation (ELT) of data from:
+This project enables infrastructure analysts to perform analysis on UK infrastructure data by automating the extraction, loading, and transformation (ELT) of data from:
 
 - Street Manager (Street Works for England only)
 - Ordnance Survey Linked Identifiers
 - Ordnance Survey Open USRNs
 - Geoplace SWA Codes
-- Scottish Roadworks Register (SRWR) - **TBC**
-
-## Features
-
-- **Process Raw Data**: Process raw data from Street Manager and other sources into a structured format
-- **Load into MotherDuck**: Load the processed data into MotherDuck
-- **DBT Analysis**: Run DBT models for transforming raw data into actionable insights - for example an england wide street work impact scores.
-
-Check out [Word on the Street](https://word-on-the-street.evidence.app) for an example of a BI product that is based on this data pipeline.
+- Scottish Roadworks Register (SRWR) **TBC**
+- Dft Road Statistics **TBC**
+- BDUK Premises Data
+- Utility Company Open Data **TBC**
 
 ## Components
 
-- **Data Sources**: Configurable interfaces for different data providers
-- **Data Processors**: Specialised handlers for each data source format
-- **Database Layer**: Abstraction over MotherDuck/DuckDB connections and operations
-- **Analysis**: DBT models for creating analytical aggregations
+- **Data Sources**: Configurable interfaces for infrastructure data providers
+- **Data Processors**: Specialized handlers for infrastructure data formats
+- **Database Layer**: Abstraction over MotherDuck/DuckDB connections for analytical queries
+- **Analysis**: DBT models for infrastructure analysts to derive insights
 - **Infrastructure**: Terraform configurations for cloud deployment
 
 ## Getting Started
@@ -47,8 +42,8 @@ FYI - This can be run:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/open-street-works-data-pipeline.git
-cd open-street-works-data-pipeline
+git clone https://github.com/your-username/open-infrastructure.git
+cd open-infrastructure
 
 # Install dependencies using Poetry
 poetry install --no-root
