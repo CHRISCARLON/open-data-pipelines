@@ -166,7 +166,7 @@ def load_geopackage_built_up_areas(
                                             try:
                                                 geom = geom.buffer(0) 
                                                 geom_wkt = wkt.dumps(geom) if geom.is_valid else None
-                                            except:
+                                            except Exception:
                                                 geom_wkt = None
                                     except Exception:
                                         geom_wkt = None
