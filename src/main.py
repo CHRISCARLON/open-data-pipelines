@@ -4,10 +4,8 @@ from loguru import logger
 from auth.get_credentials import get_secrets
 from auth.creds import secret_name
 
-
-from data_sources.bduk_premises import BDUKPremises
-from data_processors.bduk_premises import process_bduk
-
+from data_sources.built_up_areas import BuiltUpAreas
+from data_processors.built_up_areas import process_built_up_areas
 
 def main():
     # MotherDuck Credentials
@@ -15,19 +13,21 @@ def main():
     token = secrets["motherduck_token"]
     database = "sm_permit"
 
-    # Create Data Source Configs
-    bduk_premises_config = BDUKPremises.create_default_latest()
-    logger.info(f"bduk_premises_config: {bduk_premises_config}")
+    # Create Built Up Areas Data Source Config
+    built_up_areas_config = BuiltUpAreas.create_default_latest()
+    logger.info(f"built_up_areas_config: {built_up_areas_config}")
 
     with MotherDuckManager(token, database) as motherduck_manager:
-        motherduck_manager.setup_for_data_source(bduk_premises_config)
-        process_bduk(
-            download_links=bduk_premises_config.download_links,
-            table_names=bduk_premises_config.table_names,
-            batch_size=bduk_premises_config.batch_limit or 150000,
+        # Setup schema and table for Built Up Areas data
+        motherduck_manager.setup_for_data_source(built_up_areas_config)
+        
+        # Process Built Up Areas data
+        process_built_up_areas(
+            url=built_up_areas_config.download_links[0], 
             conn=motherduck_manager.connection,
-            schema_name=bduk_premises_config.schema_name,
-            expected_columns=bduk_premises_config.db_template,
+            batch_size=built_up_areas_config.batch_limit or 150000,
+            schema_name=built_up_areas_config.schema_name,
+            table_name=built_up_areas_config.table_names[0]
         )
 
 

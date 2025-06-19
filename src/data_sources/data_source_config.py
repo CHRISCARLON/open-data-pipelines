@@ -39,6 +39,14 @@ class DataSourceType(Enum):
         "bduk_premises",
         "https://www.gov.uk/government/publications/premises-in-bduk-plans-england-and-wales",
     )
+    CADENT_GAS = (
+        "cadent_gas_underground_pipes", 
+        "https://cadentgas.opendatasoft.com/api/explore/v2.1/catalog/datasets/gpi-pipe-infrastructure-open/exports/parquet"
+        )
+    BUILT_UP_AREAS = (
+        "built_up_areas",
+        "https://api.os.uk/downloads/v1/products/BuiltUpAreas/downloads?area=GB&format=GeoPackage&redirect",
+    )
     # Add other data sources as needed
 
     def __init__(self, code: str, base_url: str):
