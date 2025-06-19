@@ -25,6 +25,53 @@ docker-push:
 docker-verify:
 	aws ecr describe-images --repository-name $(REPO_NAME) --region $(REGION)
 
+# PostgreSQL Docker section
+.PHONY: postgres-start postgres-stop postgres-restart postgres-logs postgres-clean postgres-status
+
+# Default PostgreSQL configuration (can be overridden in .env)
+POSTGRES_DB ?= street_works_data
+POSTGRES_USER ?= postgres
+POSTGRES_PASSWORD ?= postgres123
+POSTGRES_PORT ?= 5432
+POSTGRES_CONTAINER_NAME ?= postgres-street-works
+
+postgres-start:
+	@echo "Starting PostgreSQL container..."
+	docker run -d \
+		--name $(POSTGRES_CONTAINER_NAME) \
+		-e POSTGRES_DB=$(POSTGRES_DB) \
+		-e POSTGRES_USER=$(POSTGRES_USER) \
+		-e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) \
+		-p $(POSTGRES_PORT):5432 \
+		-v postgres_data:/var/lib/postgresql/data \
+		postgres:15-alpine
+	@echo "PostgreSQL container started on port $(POSTGRES_PORT)"
+	@echo "Database: $(POSTGRES_DB)"
+	@echo "Username: $(POSTGRES_USER)"
+	@echo "Password: $(POSTGRES_PASSWORD)"
+
+postgres-stop:
+	@echo "Stopping PostgreSQL container..."
+	docker stop $(POSTGRES_CONTAINER_NAME) || true
+	docker rm $(POSTGRES_CONTAINER_NAME) || true
+
+postgres-restart: postgres-stop postgres-start
+
+postgres-logs:
+	docker logs -f $(POSTGRES_CONTAINER_NAME)
+
+postgres-status:
+	@echo "PostgreSQL container status:"
+	@docker ps -a --filter name=$(POSTGRES_CONTAINER_NAME) --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+postgres-clean: postgres-stop
+	@echo "Cleaning up PostgreSQL data volume..."
+	docker volume rm postgres_data || true
+
+postgres-connect:
+	@echo "Connecting to PostgreSQL..."
+	docker exec -it $(POSTGRES_CONTAINER_NAME) psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+
 # Git section
 .PHONY: update git-add git-commit git-push
 

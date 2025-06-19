@@ -1,33 +1,36 @@
-from database.motherduck import MotherDuckManager
+from database.postgresql import PostgreSQLManager
 from loguru import logger
 
-from auth.get_credentials import get_secrets
-from auth.creds import secret_name
-
-from data_sources.built_up_areas import BuiltUpAreas
-from data_processors.built_up_areas import process_built_up_areas
+from data_sources.geoplace_swa import GeoplaceSwa
+from data_processors.geoplace_swa import process_data
 
 def main():
-    # MotherDuck Credentials
-    secrets = get_secrets(secret_name)
-    token = secrets["motherduck_token"]
-    database = "sm_permit"
+    # PostgreSQL Credentials - test
+    postgres_host = "localhost"
+    postgres_port = 5432
+    postgres_database = "street_works_data"
+    postgres_user = "postgres"
+    postgres_password = "postgres123"
 
-    # Create Built Up Areas Data Source Config
-    built_up_areas_config = BuiltUpAreas.create_default_latest()
-    logger.info(f"built_up_areas_config: {built_up_areas_config}")
+    # Create Geoplace SWA Data Source Config
+    geoplace_swa_config = GeoplaceSwa.create_postgresql_latest()
+    logger.info(f"geoplace_swa_config: {geoplace_swa_config}")
 
-    with MotherDuckManager(token, database) as motherduck_manager:
-        # Setup schema and table for Built Up Areas data
-        motherduck_manager.setup_for_data_source(built_up_areas_config)
-        
-        # Process Built Up Areas data
-        process_built_up_areas(
-            url=built_up_areas_config.download_links[0], 
-            conn=motherduck_manager.connection,
-            batch_size=built_up_areas_config.batch_limit or 150000,
-            schema_name=built_up_areas_config.schema_name,
-            table_name=built_up_areas_config.table_names[0]
+    with PostgreSQLManager(
+        host=postgres_host,
+        port=postgres_port,
+        database=postgres_database,
+        user=postgres_user,
+        password=postgres_password
+    ) as postgres_manager:
+        postgres_manager.setup_for_data_source(geoplace_swa_config)
+    
+        process_data(
+            url=geoplace_swa_config.download_links[0], 
+            conn=postgres_manager.connection,
+            schema_name=geoplace_swa_config.schema_name,
+            table_name=geoplace_swa_config.table_names[0],
+            db_type="postgresql"
         )
 
 

@@ -21,3 +21,4 @@ beautifulsoup4==4.12.3
 xlrd==2.0.1
 msoffcrypto-tool==5.4.1
 odfpy == 1.4.1
+psycopg2-binary==2.9.10

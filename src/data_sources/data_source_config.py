@@ -6,6 +6,7 @@ class DataProcessorType(Enum):
     """Enum for different types of data processors"""
 
     MOTHERDUCK = "motherduck"
+    POSTGRESQL = "postgresql"
     # Add other data processors as needed
 
 

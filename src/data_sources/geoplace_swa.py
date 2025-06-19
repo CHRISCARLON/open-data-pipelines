@@ -1,5 +1,5 @@
 from typing import Optional
-from .data_source_config import (
+from data_source_config import (
     DataProcessorType,
     DataSourceType,
     TimeRange,
@@ -127,7 +127,17 @@ class GeoplaceSwa(DataSourceConfig):
             batch_limit=150000,
         )
 
+    @classmethod
+    def create_postgresql_latest(cls) -> "GeoplaceSwa":
+        return cls(
+            processor_type=DataProcessorType.POSTGRESQL,
+            time_range=TimeRange.LATEST,
+            batch_limit=150000,
+        )
+
 
 if __name__ == "__main__":
     config = GeoplaceSwa.create_default_latest()
+    config2 = GeoplaceSwa.create_postgresql_latest()
     print(config)
+    print(config2)
