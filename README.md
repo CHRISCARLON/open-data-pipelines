@@ -12,8 +12,9 @@ This project enables infrastructure analysts to perform analysis on UK infrastru
 - Geoplace SWA Codes
 - Scottish Roadworks Register (SRWR) **TBC**
 - Dft Road Statistics **TBC**
-- BDUK Premises Data
-- Utility Company Open Data **TBC**
+- BDUK Premises Data (Project Gigabit)
+- Utility Company Open Data
+- Built Up Areas
 
 ## Components
 
