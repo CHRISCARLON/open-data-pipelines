@@ -5,7 +5,6 @@ import requests
 from loguru import logger
 from tqdm import tqdm
 import time
-import numpy as np
 
 
 def insert_into_motherduck(df: pd.DataFrame, conn, schema: str, table: str) -> bool:
