@@ -12,15 +12,16 @@ This project enables infrastructure analysts to perform analysis on UK infrastru
 - Geoplace SWA Codes
 - Scottish Roadworks Register (SRWR) **TBC**
 - Dft Road Statistics **TBC**
-- BDUK Premises Data
-- Utility Company Open Data **TBC**
+- BDUK Premises Data (Project Gigabit)
+- Utility Company Open Data
+- Built Up Areas
 
 ## Components
 
 - **Data Sources**: Configurable interfaces for infrastructure data providers
 - **Data Processors**: Specialized handlers for infrastructure data formats
-- **Database Layer**: Abstraction over MotherDuck/DuckDB connections for analytical queries
-- **Analysis**: DBT models for infrastructure analysts to derive insights
+- **Database Layer**: Abstraction over MotherDuck/DuckDB & Postgres connections for processing
+- **Analysis**: DBT models for infrastructure analysts to derive insights - only MotherDuck based for now
 - **Infrastructure**: Terraform configurations for cloud deployment
 
 ## Getting Started
