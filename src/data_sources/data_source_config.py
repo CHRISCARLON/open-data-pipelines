@@ -48,6 +48,10 @@ class DataSourceType(Enum):
         "built_up_areas",
         "https://api.os.uk/downloads/v1/products/BuiltUpAreas/downloads?area=GB&format=GeoPackage&redirect",
     )
+    NHS_ENGLISH_PRESCRIBING_DATA = (
+        "nhs_english_prescribing_data",
+        f"https://opendata.nhsbsa.net/dataset/906115a6-4155-44be-8b81-f8e83cebfb84/resource/ea287041-1027-4062-9db9-040f48223b13/download/epd_snomed_202503.csv",
+    )
     # Add other data sources as needed
 
     def __init__(self, code: str, base_url: str):
