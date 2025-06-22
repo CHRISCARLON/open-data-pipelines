@@ -47,9 +47,11 @@ class PostgreSQLManager(DatabaseProtocol):
                 port=self.port,
                 database=self.database,
                 user=self.user,
-                password=self.password
+                password=self.password,
             )
-            self.cursor = self.connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            self.cursor = self.connection.cursor(
+                cursor_factory=psycopg2.extras.DictCursor
+            )
             logger.success("PostgreSQL Connection Made")
             return self.connection
         except psycopg2.Error as e:
@@ -85,7 +87,7 @@ class PostgreSQLManager(DatabaseProtocol):
             CREATE TABLE "{schema}"."{table}" (
                 {column_defs}
             );"""
-            
+
             self.cursor.execute(table_command)
             self.connection.commit()
             logger.success(f"PostgreSQL table '{schema}.{table}' created successfully")
@@ -188,7 +190,7 @@ class PostgreSQLManager(DatabaseProtocol):
 
         try:
             self.cursor.execute(query)
-            if query.strip().upper().startswith('SELECT'):
+            if query.strip().upper().startswith("SELECT"):
                 return self.cursor.fetchall()
             else:
                 self.connection.commit()
@@ -215,4 +217,4 @@ class PostgreSQLManager(DatabaseProtocol):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit point."""
-        self.close() 
+        self.close()

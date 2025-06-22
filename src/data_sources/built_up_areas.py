@@ -70,7 +70,7 @@ class BuiltUpAreas(DataSourceConfig):
         """Database schema template for OS Open Built Up Areas data."""
         return {
             "gsscode": "VARCHAR",
-            "name1_text": "VARCHAR", 
+            "name1_text": "VARCHAR",
             "name1_language": "VARCHAR",
             "name2_text": "VARCHAR",
             "name2_language": "VARCHAR",

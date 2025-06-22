@@ -59,18 +59,18 @@ class CadentUndergroundPipes(DataSourceConfig):
         Returns the direct API endpoint for the parquet data with API key.
         """
         # Get API key from environment variable
-        api_key = os.getenv('CADENT')
-        
+        api_key = os.getenv("CADENT")
+
         if not api_key:
             logger.warning("CADENT_API_KEY environment variable not found")
             # Return base URL without API key as fallback
             raise ValueError("CADENT_API_KEY environment variable not found")
-        
+
         # Add API key as query parameter
         base_url = self.base_url
         separator = "&" if "?" in base_url else "?"
         url_with_key = f"{base_url}{separator}apikey={api_key}"
-        
+
         logger.info("Using Cadent API with API key")
         return [url_with_key]
 
@@ -90,7 +90,7 @@ class CadentUndergroundPipes(DataSourceConfig):
         return {
             "unique_id": "VARCHAR",
             "geo_point": "VARCHAR",
-            "geo_shape": "VARCHAR", 
+            "geo_shape": "VARCHAR",
             "pipe_material": "VARCHAR",
             "pipe_orientation": "VARCHAR",
             "pipe_diameter": "VARCHAR",

@@ -22,7 +22,7 @@ def mock_motherduck_manager(local_duckdb_connection):
 
 
 def test_setup_for_data_source(mock_motherduck_manager):
-    """Test that setup_for_data_source creates the expected schema and tables"""
+    """Test that setup_for_data_source creates the expected schema and tables..."""
     # Create a test configuration
     test_config = OsUsrnUprn.create_default_latest()
     print(test_config)

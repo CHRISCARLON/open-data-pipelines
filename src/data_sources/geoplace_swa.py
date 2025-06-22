@@ -1,5 +1,5 @@
 from typing import Optional
-from data_source_config import (
+from .data_source_config import (
     DataProcessorType,
     DataSourceType,
     TimeRange,

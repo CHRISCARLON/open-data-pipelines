@@ -1,68 +1,13 @@
-import duckdb
-import psycopg2
-from loguru import logger
-from typing import Optional
 import pandas as pd
 import requests
+
+from loguru import logger
+from typing import Optional
 from io import BytesIO
 from datetime import datetime
 from msoffcrypto import OfficeFile
-
-
-def insert_table_to_motherduck(df, conn, schema, table):
-    """
-    Inserts a DataFrame into a DuckDB table.
-
-    This function also ensures that the order of the columns is always the same.
-
-    Args:
-        df: The DataFrame to be inserted.
-        conn: The MotherDuck connection.
-        schema: The schema of the table.
-        table: The name of the table.
-    """
-    try:
-        insert_sql = f"""INSERT INTO "{schema}"."{table}" SELECT * FROM df"""
-        conn.execute(insert_sql)
-    except (duckdb.DataError, duckdb.Error, Exception) as e:
-        logger.error(f"Error inserting DataFrame into DuckDB: {e}")
-        raise
-
-
-def insert_table_to_postgresql(df, conn, schema, table):
-    """
-    Inserts a DataFrame into a PostgreSQL table.
-
-    Args:
-        df: The DataFrame to be inserted.
-        conn: The PostgreSQL connection.
-        schema: The schema of the table.
-        table: The name of the table.
-    """
-    try:
-        # Clear existing data
-        cursor = conn.cursor()
-        cursor.execute(f'DELETE FROM "{schema}"."{table}"')
-        
-        # Insert new data row by row
-        for _, row in df.iterrows():
-            columns = ', '.join([f'"{col}"' for col in df.columns])
-            placeholders = ', '.join(['%s'] * len(df.columns))
-            insert_sql = f'INSERT INTO "{schema}"."{table}" ({columns}) VALUES ({placeholders})'
-            cursor.execute(insert_sql, tuple(row.values))
-        
-        conn.commit()
-        cursor.close()
-        logger.success(f"Inserted {len(df)} rows into PostgreSQL table {schema}.{table}")
-        
-    except psycopg2.Error as e:
-        logger.error(f"Error inserting DataFrame into PostgreSQL: {e}")
-        conn.rollback()
-        raise
-    except Exception as e:
-        logger.error(f"Unexpected error inserting into PostgreSQL: {e}")
-        conn.rollback()
-        raise
+from data_processors.data_processor_utils import insert_table
+from data_sources.data_source_config import DataProcessorType
 
 
 def clean_name_geoplace(x: str):
@@ -156,7 +101,9 @@ def fetch_swa_codes(url: str) -> Optional[pd.DataFrame]:
     return None
 
 
-def process_data(url: str, conn, schema_name: str, table_name: str, db_type: str = "motherduck") -> None:
+def process_data(
+    url: str, conn, schema_name: str, table_name: str, processor_type: DataProcessorType
+) -> None:
     """
     Main function to fetch and process data stream with Pandas.
 
@@ -167,17 +114,11 @@ def process_data(url: str, conn, schema_name: str, table_name: str, db_type: str
         table_name: The name of the table.
         db_type: Type of database - "motherduck" or "postgresql"
     """
-    logger.info(f"Starting data stream processing from {url} for {db_type}")
+    logger.info(f"Starting data stream processing from {url} for {processor_type}")
     try:
         df = fetch_swa_codes(url)
         if df is not None:
-            match db_type.lower():
-                case "postgresql":
-                    insert_table_to_postgresql(df, conn, schema_name, table_name)
-                case "motherduck":
-                    insert_table_to_motherduck(df, conn, schema_name, table_name)
-                case _:
-                    insert_table_to_motherduck(df, conn, schema_name, table_name)
+            insert_table(df, conn, schema_name, table_name, processor_type)
             logger.success(f"Data inserted into {schema_name}.{table_name}")
     except Exception as e:
         logger.error(f"Error processing data: {e}")

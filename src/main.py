@@ -1,52 +1,38 @@
-from database.motherduck import MotherDuckManager
+from database.postgresql import PostgreSQLManager
 from loguru import logger
 
-from auth.get_credentials import get_secrets
-from auth.creds import secret_name
-
-from data_sources.street_manager import StreetManager
-from data_sources.data_source_config import DataProcessorType, TimeRange
-from data_processors.street_manager import process_data
+from data_sources.geoplace_swa import GeoplaceSwa
+from data_processors.geoplace_swa import process_data
 
 
 def main():
-    # MotherDuck Credentials
-    secrets = get_secrets(secret_name)
-    token = secrets["motherduck_token"]
-    database = "street_works_data"
+    # PostgreSQL Credentials - test
+    postgres_host = "localhost"
+    postgres_port = 5432
+    postgres_database = "street_works_data"
+    postgres_user = "postgres"
+    postgres_password = "postgres123"
 
-    # Create Street Manager Data Source Config for 2025 (Jan-May)
-    street_manager_config = StreetManager(
-        processor_type=DataProcessorType.MOTHERDUCK,
-        time_range=TimeRange.HISTORIC,
-        batch_limit=200000,
-        year=2025,
-        start_month=1,
-        end_month=6,  # Non-inclusive, so this covers Jan-May
-    )
-    
-    logger.info(f"street_manager_config: {street_manager_config}")
-    logger.info(f"Processing {len(street_manager_config.download_links)} months of data")
-    logger.info(f"Download links: {street_manager_config.download_links}")
+    # Create Geoplace SWA Data Source Config
+    geoplace_swa_config = GeoplaceSwa.create_postgresql_latest()
+    logger.info(f"geoplace_swa_config: {geoplace_swa_config}")
 
-    with MotherDuckManager(token, database) as motherduck_manager:
-        motherduck_manager.setup_for_data_source(street_manager_config)
-        
-        # Process each month of data
-        for i, url in enumerate(street_manager_config.download_links):
-            table_name = street_manager_config.table_names[i]
-            logger.info(f"Processing {url} -> {table_name}")
-            
-            # Ensure batch_size is not None
-            batch_size = street_manager_config.batch_limit or 200000
-            
-            process_data(
-                url=url,
-                batch_size=batch_size,
-                conn=motherduck_manager.connection,
-                schema_name=street_manager_config.schema_name,
-                table_name=table_name,
-            )
+    with PostgreSQLManager(
+        host=postgres_host,
+        port=postgres_port,
+        database=postgres_database,
+        user=postgres_user,
+        password=postgres_password,
+    ) as postgres_manager:
+        postgres_manager.setup_for_data_source(geoplace_swa_config)
+
+        process_data(
+            url=geoplace_swa_config.download_links[0],
+            conn=postgres_manager.connection,
+            schema_name=geoplace_swa_config.schema_name,
+            table_name=geoplace_swa_config.table_names[0],
+            processor_type=geoplace_swa_config.processor_type,
+        )
 
 
 if __name__ == "__main__":

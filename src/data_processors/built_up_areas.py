@@ -116,7 +116,10 @@ def load_geopackage_built_up_areas(
             gpkg_file = None
             for root, dirs, files in os.walk(temp_dir):
                 for file_name in files:
-                    if file_name.endswith(".gpkg") and "built_up_areas" in file_name.lower():
+                    if (
+                        file_name.endswith(".gpkg")
+                        and "built_up_areas" in file_name.lower()
+                    ):
                         gpkg_file = os.path.join(root, file_name)
                         logger.success(f"Found Built Up Areas GeoPackage: {gpkg_file}")
                         break
@@ -152,37 +155,79 @@ def load_geopackage_built_up_areas(
                         features = []
 
                         for i, feature in enumerate(
-                            tqdm(src, total=total_features, desc="Processing Built Up Areas")
+                            tqdm(
+                                src,
+                                total=total_features,
+                                desc="Processing Built Up Areas",
+                            )
                         ):
                             try:
                                 geom_wkt = None
                                 if feature.get("geometry"):
                                     try:
                                         geom = shape(feature["geometry"])
-                                        
+
                                         if geom and geom.is_valid:
                                             geom_wkt = wkt.dumps(geom)
                                         else:
                                             try:
-                                                geom = geom.buffer(0) 
-                                                geom_wkt = wkt.dumps(geom) if geom.is_valid else None
+                                                geom = geom.buffer(0)
+                                                geom_wkt = (
+                                                    wkt.dumps(geom)
+                                                    if geom.is_valid
+                                                    else None
+                                                )
                                             except Exception:
                                                 geom_wkt = None
                                     except Exception:
                                         geom_wkt = None
-                                
+
                                 # Create record - convert everything to string
                                 built_up_area_record = {
-                                    "gsscode": str(feature["properties"].get("gsscode", "")) if feature["properties"].get("gsscode") is not None else None,
-                                    "name1_text": str(feature["properties"].get("name1_text", "")) if feature["properties"].get("name1_text") is not None else None,
-                                    "name1_language": str(feature["properties"].get("name1_language", "")) if feature["properties"].get("name1_language") is not None else None,
-                                    "name2_text": str(feature["properties"].get("name2_text", "")) if feature["properties"].get("name2_text") is not None else None,
-                                    "name2_language": str(feature["properties"].get("name2_language", "")) if feature["properties"].get("name2_language") is not None else None,
-                                    "areahectares": str(feature["properties"].get("areahectares", "")) if feature["properties"].get("areahectares") is not None else None,
-                                    "geometry_area_m": str(feature["properties"].get("geometry_area_m", "")) if feature["properties"].get("geometry_area_m") is not None else None,
-                                    "geometry": geom_wkt
+                                    "gsscode": str(
+                                        feature["properties"].get("gsscode", "")
+                                    )
+                                    if feature["properties"].get("gsscode") is not None
+                                    else None,
+                                    "name1_text": str(
+                                        feature["properties"].get("name1_text", "")
+                                    )
+                                    if feature["properties"].get("name1_text")
+                                    is not None
+                                    else None,
+                                    "name1_language": str(
+                                        feature["properties"].get("name1_language", "")
+                                    )
+                                    if feature["properties"].get("name1_language")
+                                    is not None
+                                    else None,
+                                    "name2_text": str(
+                                        feature["properties"].get("name2_text", "")
+                                    )
+                                    if feature["properties"].get("name2_text")
+                                    is not None
+                                    else None,
+                                    "name2_language": str(
+                                        feature["properties"].get("name2_language", "")
+                                    )
+                                    if feature["properties"].get("name2_language")
+                                    is not None
+                                    else None,
+                                    "areahectares": str(
+                                        feature["properties"].get("areahectares", "")
+                                    )
+                                    if feature["properties"].get("areahectares")
+                                    is not None
+                                    else None,
+                                    "geometry_area_m": str(
+                                        feature["properties"].get("geometry_area_m", "")
+                                    )
+                                    if feature["properties"].get("geometry_area_m")
+                                    is not None
+                                    else None,
+                                    "geometry": geom_wkt,
                                 }
-                                
+
                             except Exception as e:
                                 # Fallback with nulls grrrr
                                 built_up_area_record = {
@@ -193,7 +238,7 @@ def load_geopackage_built_up_areas(
                                     "name2_language": None,
                                     "areahectares": None,
                                     "geometry_area_m": None,
-                                    "geometry": None
+                                    "geometry": None,
                                 }
                                 error_msg = f"Error processing feature {i}: {e}"
                                 logger.warning(error_msg)
@@ -205,14 +250,18 @@ def load_geopackage_built_up_areas(
                             if len(features) == chunk_size:
                                 df_chunk = pd.DataFrame(features)
                                 insert_into_motherduck(df_chunk, conn, schema, table)
-                                logger.info(f"Processed Built Up Areas batch: {i-chunk_size+1} to {i}")
+                                logger.info(
+                                    f"Processed Built Up Areas batch: {i-chunk_size+1} to {i}"
+                                )
                                 features = []
 
                         # Process any remaining features
                         if features:
                             df_chunk = pd.DataFrame(features)
                             insert_into_motherduck(df_chunk, conn, schema, table)
-                            logger.info(f"Processed remaining Built Up Areas features: {len(features)}")
+                            logger.info(
+                                f"Processed remaining Built Up Areas features: {len(features)}"
+                            )
 
                 except Exception as e:
                     error_msg = f"Error processing Built Up Areas GeoPackage: {e}"
@@ -240,18 +289,24 @@ def load_geopackage_built_up_areas(
     return None
 
 
-def process_built_up_areas(url: str, conn, batch_size: int, schema_name: str, table_name: str):
+def process_built_up_areas(
+    url: str, conn, batch_size: int, schema_name: str, table_name: str
+):
     """
     Process the Built Up Areas data from the url and insert it into the motherduck table.
     """
-    logger.info(f"Starting Built Up Areas processing from {url} with batch size {batch_size}")
-    
+    logger.info(
+        f"Starting Built Up Areas processing from {url} with batch size {batch_size}"
+    )
+
     try:
         conn.execute("INSTALL spatial;")
         conn.execute("LOAD spatial;")
         logger.info("Spatial extension loaded for Built Up Areas")
     except Exception as e:
         logger.warning(f"Could not load spatial extension: {e}")
-    
+
     redirect_url = fetch_redirect_url(url)
-    load_geopackage_built_up_areas(redirect_url, conn, batch_size, schema_name, table_name)
+    load_geopackage_built_up_areas(
+        redirect_url, conn, batch_size, schema_name, table_name
+    )

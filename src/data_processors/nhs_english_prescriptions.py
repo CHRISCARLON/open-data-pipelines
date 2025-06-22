@@ -89,41 +89,46 @@ def validate_column_names(
     return len(issues) == 0, issues
 
 
-def clean_dataframe_for_motherduck(df: pd.DataFrame, expected_columns: Dict[str, str]) -> pd.DataFrame:
+def clean_dataframe_for_motherduck(
+    df: pd.DataFrame, expected_columns: Dict[str, str]
+) -> pd.DataFrame:
     """
     Clean DataFrame to handle data type issues for MotherDuck insertion.
-    
+
     Args:
         df: DataFrame to clean
         expected_columns: Dict of column names and their expected types
-        
+
     Returns:
         Cleaned DataFrame
     """
     # TODO: This is a hack to get the data into MotherDuck.
     # We need to find a better way to do this.
     df_clean = df.copy()
-    
+
     # Define numeric columns that need special handling
     numeric_columns = {
-        col: dtype for col, dtype in expected_columns.items() 
-        if dtype in ['BIGINT', 'DOUBLE', 'INTEGER']
+        col: dtype
+        for col, dtype in expected_columns.items()
+        if dtype in ["BIGINT", "DOUBLE", "INTEGER"]
     }
-    
+
     for col, dtype in numeric_columns.items():
         if col in df_clean.columns:
-            df_clean[col] = df_clean[col].replace(['', 'nan', 'NaN', 'null'], None)
-            
-            if dtype == 'BIGINT':
-                df_clean[col] = pd.to_numeric(df_clean[col], errors='coerce').astype('Int64')
-            elif dtype == 'DOUBLE':
-                df_clean[col] = pd.to_numeric(df_clean[col], errors='coerce')
-    
+            df_clean[col] = df_clean[col].replace(["", "nan", "NaN", "null"], None)
+
+            if dtype == "BIGINT":
+                df_clean[col] = pd.to_numeric(df_clean[col], errors="coerce").astype(
+                    "Int64"
+                )
+            elif dtype == "DOUBLE":
+                df_clean[col] = pd.to_numeric(df_clean[col], errors="coerce")
+
     # Convert remaining columns to string, replacing nan with None
     string_columns = [col for col in df_clean.columns if col not in numeric_columns]
     for col in string_columns:
-        df_clean[col] = df_clean[col].astype(str).replace(['nan', 'NaN', 'null'], None)
-    
+        df_clean[col] = df_clean[col].astype(str).replace(["nan", "NaN", "null"], None)
+
     return df_clean
 
 
@@ -158,19 +163,18 @@ def stream_csv_from_url(
         with tqdm(
             total=total_size, unit="B", unit_scale=True, desc="Streaming CSV"
         ) as pbar:
-
             for chunk in response.iter_content(chunk_size=1048576):
                 if chunk:
                     # Update progress bar with actual chunk size
                     pbar.update(len(chunk))
-                    
+
                     # Decode bytes to string
                     try:
-                        text_chunk = chunk.decode('utf-8', errors='ignore')
+                        text_chunk = chunk.decode("utf-8", errors="ignore")
                     except UnicodeDecodeError:
                         logger.warning("Failed to decode chunk as UTF-8, skipping")
                         continue
-                    
+
                     # Handle partial lines from previous chunk
                     text_chunk = partial_line + text_chunk
                     lines = text_chunk.split("\n")
@@ -213,12 +217,18 @@ def stream_csv_from_url(
                                         df_batch = pd.DataFrame(row_buffer)
                                         # Clean the dataframe before yielding
                                         if expected_columns:
-                                            df_batch = clean_dataframe_for_motherduck(df_batch, expected_columns)
+                                            df_batch = clean_dataframe_for_motherduck(
+                                                df_batch, expected_columns
+                                            )
                                         yield df_batch
                                         row_buffer = []
-                                        logger.debug(f"Yielded batch of {batch_size} rows")
+                                        logger.debug(
+                                            f"Yielded batch of {batch_size} rows"
+                                        )
                                 else:
-                                    logger.warning(f"Row has {len(values)} values but header has {len(header)} columns")
+                                    logger.warning(
+                                        f"Row has {len(values)} values but header has {len(header)} columns"
+                                    )
                             except csv.Error as e:
                                 logger.warning(f"Error parsing CSV line: {e}")
                                 continue
@@ -238,7 +248,9 @@ def stream_csv_from_url(
                 df_batch = pd.DataFrame(row_buffer)
                 # Clean the dataframe before yielding
                 if expected_columns:
-                    df_batch = clean_dataframe_for_motherduck(df_batch, expected_columns)
+                    df_batch = clean_dataframe_for_motherduck(
+                        df_batch, expected_columns
+                    )
                 yield df_batch
                 logger.debug(f"Yielded final batch of {len(row_buffer)} rows")
 
