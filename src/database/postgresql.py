@@ -3,10 +3,10 @@ import psycopg2.extras
 from loguru import logger
 from typing import Dict, Optional, List, Any
 from data_sources.data_source_config import DataSourceConfig, DataProcessorType
-from database.database_config import DatabaseProtocol
+from database.database_config import DatabaseProtocolTrait
 
 
-class PostgreSQLManager(DatabaseProtocol):
+class PostgreSQLManager(DatabaseProtocolTrait):
     """
     Generic PostgreSQL manager that handles connections and table operations.
     """
