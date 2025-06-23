@@ -3,7 +3,7 @@ import psycopg2.extras
 from loguru import logger
 from typing import Dict, Optional, List, Any
 from data_sources.data_source_config import DataSourceConfig, DataProcessorType
-from database.database_config import DatabaseProtocolTrait
+from databases.database_config import DatabaseProtocolTrait
 
 
 class PostgreSQLManager(DatabaseProtocolTrait):

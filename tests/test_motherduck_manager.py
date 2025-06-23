@@ -1,7 +1,7 @@
 import pytest
 import duckdb
 
-from database.motherduck import MotherDuckManager
+from databases.motherduck import MotherDuckManager
 from data_sources.os_usrn_uprn import OsUsrnUprn
 
 

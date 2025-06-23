@@ -1,7 +1,7 @@
 """
 Main entry point for the data pipeline.
 """
-from database.motherduck import MotherDuckManager
+from databases.motherduck import MotherDuckManager
 from loguru import logger
 
 from auth.get_credentials import get_secrets
