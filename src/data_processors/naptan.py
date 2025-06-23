@@ -4,7 +4,6 @@ from typing import Iterator, List, Dict, Tuple, Optional
 import requests
 from loguru import logger
 from tqdm import tqdm
-import time
 from data_processors.utils.data_processor_utils import insert_table
 from data_sources.data_source_config import DataProcessorType
 
@@ -61,7 +60,7 @@ def clean_naptan_data(df: pd.DataFrame, expected_columns: Dict[str, str]) -> pd.
                 df_cleaned[col] = df_cleaned[col].replace(['', 'nan', 'NaN'], None)
                 try:
                     df_cleaned[col] = pd.to_numeric(df_cleaned[col], errors='coerce')
-                except:
+                except Exception:
                     logger.warning(f"Setting numeric column {col} to NULL due to conversion issues")
                     df_cleaned[col] = None
                     
@@ -135,11 +134,11 @@ def stream_csv_from_url(
                                 )
                                 
                                 if not is_valid:
-                                    logger.error(f"Column validation failed:")
+                                    logger.error("Column validation failed:")
                                     for issue in issues:
                                         logger.error(f"  - {issue}")
                                     
-                                    raise ValueError(f"Invalid columns in CSV")
+                                    raise ValueError("Invalid columns in CSV")
                                 else:
                                     logger.info("✓ Column validation passed")
                         else:
@@ -330,7 +329,7 @@ def process_data(
             processor_type=processor_type,
             expected_columns=expected_columns,
         )
-        logger.success(f"NAPTAN data processing completed successfully")
+        logger.success("NAPTAN data processing completed successfully")
     except Exception as e:
         logger.error(f"Error processing NAPTAN data: {e}")
         raise

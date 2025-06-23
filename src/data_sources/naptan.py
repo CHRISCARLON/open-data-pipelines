@@ -5,7 +5,6 @@ from .data_source_config import (
     TimeRange,
     DataSourceConfig,
 )
-from loguru import logger
 
 
 class Naptan(DataSourceConfig):
