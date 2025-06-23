@@ -36,6 +36,7 @@ class GeoplaceSwa(DataSourceConfig):
         self._time_range = time_range
         self.batch_limit = batch_limit
         self._source_type = DataSourceType.GEOPLACE_SWA
+        self._cached_download_links = None  # Cache for download links
 
     @property
     def processor_type(self) -> DataProcessorType:
@@ -57,6 +58,11 @@ class GeoplaceSwa(DataSourceConfig):
     @property
     def download_links(self) -> list[str]:
         """Get the download links for the configured data source."""
+        # Return cached result if available
+        if self._cached_download_links is not None:
+            return self._cached_download_links
+
+        # Otherwise, scrape and cache the result
         try:
             response = requests.get(self.base_url)
             response.raise_for_status()
@@ -64,8 +70,9 @@ class GeoplaceSwa(DataSourceConfig):
             download_link = soup.find("a", class_="download-item__download-link")
             if download_link and isinstance(download_link, Tag):
                 href = download_link.get("href")
-                logger.success("Link Found")
-                return [str(href)]
+                logger.success("Download Link Found")
+                self._cached_download_links = [str(href)]  # Cache the result
+                return self._cached_download_links
             else:
                 raise ValueError("No valid download link found on the page")
         except Exception as e:

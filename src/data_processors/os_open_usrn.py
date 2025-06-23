@@ -111,7 +111,7 @@ def load_geopackage_open_usrns(
 
         # Create a temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
-            # Write the zip file to the temporary directory
+            # Write the zip file to the temporary directory and file!
             zip_path = os.path.join(temp_dir, "temp.zip")
             with open(zip_path, "wb") as zip_file:
                 zip_file.write(response.content)

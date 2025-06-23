@@ -2,7 +2,7 @@ from typing import Any, Dict, Protocol
 from data_sources.data_source_config import DataSourceConfig
 
 
-class DatabaseProtocol(Protocol):
+class DatabaseProtocolTrait(Protocol):
     """Protocol defining the interface for database managers."""
 
     def connect(self) -> Any:

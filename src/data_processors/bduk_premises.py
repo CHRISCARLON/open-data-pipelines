@@ -281,7 +281,7 @@ def process_streaming_data(
     finally:
         if errors:
             logger.error(f"Total errors encountered: {len(errors)}")
-            for error in errors[:5]:  # Show first 5 errors
+            for error in errors[:5]:
                 logger.error(error)
             if len(errors) > 5:
                 logger.error(f"... and {len(errors) - 5} more errors")
