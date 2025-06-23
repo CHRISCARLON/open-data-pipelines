@@ -6,7 +6,7 @@ from typing import Optional
 from io import BytesIO
 from datetime import datetime
 from msoffcrypto import OfficeFile
-from data_processors.data_processor_utils import insert_table
+from data_processors.utils.data_processor_utils import insert_table
 from data_sources.data_source_config import DataProcessorType
 
 
