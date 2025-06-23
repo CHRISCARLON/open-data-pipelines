@@ -1,89 +1,31 @@
-# Open Infrastructure 🚙
+# Open Data Pipelines 📊
 
-Data pipelines for analysts working with UK infrastructure data.
+Data pipelines for working with UK open data sources.
 
-## Overview
+## Purpose
 
-This project enables infrastructure analysts to perform analysis on UK infrastructure data by automating the extraction, loading, and transformation (ELT) of data from:
+This project enables data analysts to perform analysis on UK open data by automating the extraction, loading, and transformation (ELT) of data from various government and public sector sources.
 
-- Street Manager (Street Works for England only)
-- Ordnance Survey Linked Identifiers
-- Ordnance Survey Open USRNs
-- Geoplace SWA Codes
-- Scottish Roadworks Register (SRWR) **TBC**
-- Dft Road Statistics **TBC**
-- BDUK Premises Data (Project Gigabit)
-- Utility Company Open Data
-- Built Up Areas
+## Current Data Sources
 
-## Components
+- **Street Manager** - Street Works data for England
+- **Ordnance Survey** - USRNs, Linked Identifiers
+- **Geoplace SWA Codes** - Street Works Authority codes
+- **NAPTAN** - Public Transport Access Nodes
+- **BDUK Premises Data** - Project Gigabit premises
+- **Built Up Areas** - OS Built Up Areas boundaries
+- **NHS Prescribing Data** - English prescribing data
+- **Utility Company Open Data** - Underground infrastructure
 
-- **Data Sources**: Configurable interfaces for infrastructure data providers
-- **Data Processors**: Specialized handlers for infrastructure data formats
-- **Database Layer**: Abstraction over MotherDuck/DuckDB & Postgres connections for processing
-- **Analysis**: DBT models for infrastructure analysts to derive insights - only MotherDuck based for now
-- **Infrastructure**: Terraform configurations for cloud deployment
+## Current Analyses
 
-## Getting Started
+DBT models are set up for certain analyses:
 
-### Prerequisites
+- **Street Works Impact Index Score** - this feeds into [Word on the Street](https://word-on-the-street.evidence.app)
 
-- Python 3.11+
-- Poetry for dependency management
-- AWS credentials (if using cloud deployment)
-- MotherDuck token
+## Future Vision
 
-FYI - This can be run:
-
-- Locally with a Python venv
-- Locally with Docker
-- In the cloud with AWS Fargate (see terraform/main.tf)
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/your-username/open-infrastructure.git
-cd open-infrastructure
-
-# Install dependencies using Poetry
-poetry install --no-root
-```
-
-### Configuration
-
-Create a `.env` file with your configuration:
-
-```zsh
-# MotherDuck credentials
-MOTHERDUCK_TOKEN=your_token
-MOTHERDB=your_database
-
-# AWS deployment (if using)
-REGION=your_aws_region
-ACCOUNT_ID=your_aws_account_id
-REPO_NAME=your_ecr_repo_name
-```
-
-### Running the Pipeline
-
-```bash
-poetry run python -m src.main
-```
-
-## Deployment
-
-If deploying to AWS Fargate, the project includes a Makefile to simplify Docker image building and AWS deployment:
-
-```bash
-# Build and push Docker image to ECR
-make docker-all
-
-# Apply Terraform configuration
-cd terraform
-terraform init
-terraform apply
-```
+This will become a library where you simply define data sources in YAML configuration files. For now, data sources are configured programmatically in Python.
 
 ## License
 
