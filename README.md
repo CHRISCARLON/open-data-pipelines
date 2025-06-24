@@ -22,7 +22,7 @@ This project enables data analysts to perform analysis on UK open data by automa
 DBT models are set up for certain analyses:
 
 - **Street Works Impact Index Score** - this feeds into [Word on the Street](https://word-on-the-street.evidence.app)
-- **NAPTAN to USRNs** - this is a test of the NAPTAN data against the USRN data - can we geopstically join them??
+- **NAPTAN to USRNs** - this is a test of the NAPTAN data against the USRN data - can we geospatial join them??
 
 ## License
 
