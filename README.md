@@ -23,10 +23,6 @@ DBT models are set up for certain analyses:
 
 - **Street Works Impact Index Score** - this feeds into [Word on the Street](https://word-on-the-street.evidence.app)
 
-## Future Vision
-
-This will become a library where you simply define data sources in YAML configuration files. For now, data sources are configured programmatically in Python.
-
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
