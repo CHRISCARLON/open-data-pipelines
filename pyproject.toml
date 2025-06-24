@@ -35,7 +35,7 @@ fastexcel = "^0.11.5"
 msoffcrypto-tool = "^5.4.1"
 beautifulsoup4 = "^4.12.3"
 odfpy = "^1.4.1"
-dbt-duckdb = "^1.9.1"
+dbt-duckdb = "1.9.1"
 psycopg2-binary = "^2.9.10"
 
 
