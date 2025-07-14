@@ -26,7 +26,7 @@ jobs:
           python-version-file: "pyproject.toml"
 
       - name: Install the project
-        run: uv sync --frozen --no-cache
+        run: uv sync --no-cache
 
       - name: Run geoplace swa pipeline
         run: uv run src/main.py

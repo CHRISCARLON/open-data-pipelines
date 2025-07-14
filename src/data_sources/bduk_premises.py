@@ -8,7 +8,6 @@ from .data_source_config import (
 import requests
 from bs4 import BeautifulSoup, Tag
 from loguru import logger
-from typing import cast
 
 
 class BDUKPremises(DataSourceConfig):
