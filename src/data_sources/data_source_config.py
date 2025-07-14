@@ -52,10 +52,7 @@ class DataSourceType(Enum):
         "nhs_english_prescribing_data",
         "https://opendata.nhsbsa.net/dataset/906115a6-4155-44be-8b81-f8e83cebfb84/resource/ea287041-1027-4062-9db9-040f48223b13/download/epd_snomed_202503.csv",
     )
-    NAPTAN = (
-        "naptan_data",
-        "https://beta-naptan.dft.gov.uk/Download/National/csv"
-    )
+    NAPTAN = ("naptan_data", "https://beta-naptan.dft.gov.uk/Download/National/csv")
     # Add other data sources as needed
 
     def __init__(self, code: str, base_url: str):
@@ -115,6 +112,21 @@ class DataSourceConfig(Protocol):
     @property
     def db_template(self) -> dict:
         """Get the database template for the configured data source"""
+        ...
+
+    @property
+    def metadata_schema_name(self) -> str:
+        """Get the metadata schema name for tracking processing information"""
+        ...
+
+    @property
+    def metadata_table_name(self) -> str:
+        """Get the metadata table name for logging processing runs"""
+        ...
+
+    @property
+    def metadata_db_template(self) -> dict:
+        """Get the database template for metadata logging table"""
         ...
 
     def __str__(self) -> str:

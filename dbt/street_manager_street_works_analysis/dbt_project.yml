@@ -30,9 +30,8 @@ clean-targets:
 # files using the `{{ config(...) }}` macro.
 
 vars:
-  # Go back two months from run date to get the month being archived
-  year: "{{ (run_started_at - modules.datetime.timedelta(days=63)).strftime('%Y') }}"
-  month: "{{ (run_started_at - modules.datetime.timedelta(days=63)).strftime('%m') }}"
+  year: "{{ (run_started_at - modules.datetime.timedelta(days=33)).strftime('%Y') }}"
+  month: "{{ (run_started_at - modules.datetime.timedelta(days=33)).strftime('%m') }}"
 
 models:
   street_manager_street_works_analysis:

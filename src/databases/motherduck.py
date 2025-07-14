@@ -81,6 +81,43 @@ class MotherDuckManager(DatabaseProtocolTrait):
             logger.error(f"Error creating table: {e}")
             raise
 
+    def create_metadata_table(
+        self, schema: str, table: str, columns: Dict[str, str]
+    ) -> bool:
+        """
+        Create a table in MotherDuck with specified schema and columns.
+
+        Args:
+            schema: Schema name (must already exist)
+            table: Table name to create
+            columns: Dictionary of column names and their types
+
+        Returns:
+            Boolean indicating success
+        """
+        if self.connection is None:
+            self.connect()
+
+        if not self.connection:
+            return False
+
+        # Build column definitions from dictionary
+        column_defs = ",\n                ".join(
+            [f"{col_name} {col_type}" for col_name, col_type in columns.items()]
+        )
+        logger.info(f"Creating table {schema}.{table} with columns: {column_defs}")
+
+        try:
+            table_command = f"""CREATE TABLE IF NOT EXISTS "{schema}"."{table}" (
+                {column_defs}
+            );"""
+            self.connection.execute(table_command)
+            logger.success(f"MotherDuck table '{schema}.{table}' created successfully")
+            return True
+        except Exception as e:
+            logger.error(f"Error creating table: {e}")
+            raise
+
     def create_table_from_data_source(self, config: DataSourceConfig) -> bool:
         """
         Create tables based on a data source configuration.

@@ -1,48 +1,32 @@
-"""
-Main entry point for the data pipeline.
-"""
 from databases.motherduck import MotherDuckManager
 from loguru import logger
+import os
 
-from auth.get_credentials import get_secrets
-from auth.creds import secret_name
-
-from data_sources.naptan import Naptan
-from data_processors.naptan import process_data as process_naptan
+from data_sources.geoplace_swa import GeoplaceSwa
+from data_processors.geoplace_swa import process_data as process_geoplace_swa
+from data_processors.utils.metadata_logger import ensure_metadata_schema_exists
 
 
 def main():
-    # MotherDuck Credentials
-    secrets = get_secrets(secret_name)
-    token = secrets["motherduck_token"]
-    database = "sm_permit" 
-
-    # Create Data Source Config
-    naptan_config = Naptan.create_default_latest()
-
-    logger.info(f"naptan_config: {naptan_config}")
-
-    with MotherDuckManager(token, database) as motherduck_manager:
-        motherduck_manager.setup_for_data_source(naptan_config)
-
-        download_link = naptan_config.download_links[0] 
-        table_name = naptan_config.table_names[0]  
+    if not (token := os.getenv("MOTHERDUCK_TOKEN")) or not (database := os.getenv("MOTHERDB")):
+        raise ValueError("MOTHERDUCK_TOKEN and MOTHERDB must be set")
         
-        logger.info(f"Processing {table_name}")
-        try:
-            process_naptan(
-                download_link=download_link,
-                table_name=table_name,
-                batch_size=naptan_config.batch_limit or 100000,
-                conn=motherduck_manager.connection,
-                schema_name=naptan_config.schema_name,
-                processor_type=naptan_config.processor_type,
-                expected_columns=naptan_config.db_template,
-            )
-            logger.success(f"Successfully completed processing {table_name}")
-        except Exception as e:
-            logger.error(f"Failed to process {table_name}: {e}")
-            raise
+    config = GeoplaceSwa.create_default_latest()
+    logger.info(f"Config: {config}")
+
+    with MotherDuckManager(token, database) as db_manager:
+        db_manager.setup_for_data_source(config)
+        ensure_metadata_schema_exists(config, db_manager)
+
+        url = config.download_links[0]
+        process_geoplace_swa(
+            url=url,
+            conn=db_manager.connection,
+            schema_name=config.schema_name,
+            table_name=config.table_names[0],
+            processor_type=config.processor_type,
+            config=config,
+        )
 
 
 if __name__ == "__main__":

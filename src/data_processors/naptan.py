@@ -39,38 +39,43 @@ def validate_column_names(
     return len(issues) == 0, issues
 
 
-def clean_naptan_data(df: pd.DataFrame, expected_columns: Dict[str, str]) -> pd.DataFrame:
+def clean_naptan_data(
+    df: pd.DataFrame, expected_columns: Dict[str, str]
+) -> pd.DataFrame:
     """
     Clean NAPTAN data - set problematic values to NULL.
-    
+
     Args:
         df: DataFrame to clean
         expected_columns: Dict of column names and their expected types
-        
+
     Returns:
         Cleaned DataFrame
     """
     df_cleaned = df.copy()
-    
+
     # Handle different data types - when in doubt, set to NULL
     for col, dtype in expected_columns.items():
         if col in df_cleaned.columns:
-            if dtype in ['DOUBLE', 'BIGINT']:
-                
-                df_cleaned[col] = df_cleaned[col].replace(['', 'nan', 'NaN'], None)
+            if dtype in ["DOUBLE", "BIGINT"]:
+                df_cleaned[col] = df_cleaned[col].replace(["", "nan", "NaN"], None)
                 try:
-                    df_cleaned[col] = pd.to_numeric(df_cleaned[col], errors='coerce')
+                    df_cleaned[col] = pd.to_numeric(df_cleaned[col], errors="coerce")
                 except Exception:
-                    logger.warning(f"Setting numeric column {col} to NULL due to conversion issues")
+                    logger.warning(
+                        f"Setting numeric column {col} to NULL due to conversion issues"
+                    )
                     df_cleaned[col] = None
-                    
-            elif dtype == 'TIMESTAMP':
+
+            elif dtype == "TIMESTAMP":
                 logger.debug(f"Setting timestamp column {col} to NULL")
                 df_cleaned[col] = None
-                    
-            else:  
-                df_cleaned[col] = df_cleaned[col].astype(str).replace(['nan', 'NaN', 'None'], None)
-    
+
+            else:
+                df_cleaned[col] = (
+                    df_cleaned[col].astype(str).replace(["nan", "NaN", "None"], None)
+                )
+
     logger.debug(f"Cleaned DataFrame shape: {df_cleaned.shape}")
     return df_cleaned
 
@@ -91,7 +96,7 @@ def stream_csv_from_url(
     """
     try:
         logger.info(f"Starting stream from {csv_url}")
-        
+
         # Start streaming with a larger timeout for NAPTAN
         response = requests.get(csv_url, stream=True, timeout=60)
         response.raise_for_status()
@@ -102,42 +107,41 @@ def stream_csv_from_url(
         with tqdm(
             total=total_size, unit="B", unit_scale=True, desc="Streaming CSV"
         ) as pbar:
-            
             row_buffer = []
             header = None
             partial_line = ""
-            
+
             for chunk in response.iter_content(chunk_size=1048576):
                 if chunk:
                     pbar.update(len(chunk))
-                    
+
                     try:
-                        text_chunk = chunk.decode('utf-8')
+                        text_chunk = chunk.decode("utf-8")
                     except UnicodeDecodeError:
-                        text_chunk = chunk.decode('utf-8', errors='ignore')
-                    
+                        text_chunk = chunk.decode("utf-8", errors="ignore")
+
                     text_chunk = partial_line + text_chunk
-                    lines = text_chunk.split('\n')
+                    lines = text_chunk.split("\n")
                     partial_line = lines[-1]
                     lines = lines[:-1]
-                    
+
                     for line in lines:
                         if not line.strip():
                             continue
-                            
+
                         if header is None:
                             header = next(csv.reader([line]))
-                            
+
                             if expected_columns:
                                 is_valid, issues = validate_column_names(
                                     header, expected_columns
                                 )
-                                
+
                                 if not is_valid:
                                     logger.error("Column validation failed:")
                                     for issue in issues:
                                         logger.error(f"  - {issue}")
-                                    
+
                                     raise ValueError("Invalid columns in CSV")
                                 else:
                                     logger.info("✓ Column validation passed")
@@ -147,23 +151,27 @@ def stream_csv_from_url(
                                 if len(values) == len(header):
                                     row_dict = dict(zip(header, values))
                                     row_buffer.append(row_dict)
-                                    
+
                                     # Yield batch when full
                                     if len(row_buffer) >= batch_size:
                                         df_batch = pd.DataFrame(row_buffer)
-                                        
+
                                         # Clean the data if expected_columns provided
                                         if expected_columns:
-                                            df_batch = clean_naptan_data(df_batch, expected_columns)
-                                        
+                                            df_batch = clean_naptan_data(
+                                                df_batch, expected_columns
+                                            )
+
                                         yield df_batch
                                         row_buffer = []
-                                        logger.debug(f"Yielded batch of {batch_size} rows")
-                                        
+                                        logger.debug(
+                                            f"Yielded batch of {batch_size} rows"
+                                        )
+
                             except csv.Error as e:
                                 logger.warning(f"Error parsing CSV line: {e}")
                                 continue
-            
+
             # Process final partial line if exists
             if partial_line.strip() and header:
                 try:
@@ -173,15 +181,15 @@ def stream_csv_from_url(
                         row_buffer.append(row_dict)
                 except csv.Error:
                     pass
-            
+
             # Yield remaining rows
             if row_buffer:
                 df_batch = pd.DataFrame(row_buffer)
-                
+
                 # Clean the data if expected_columns provided
                 if expected_columns:
                     df_batch = clean_naptan_data(df_batch, expected_columns)
-                    
+
                 yield df_batch
                 logger.debug(f"Yielded final batch of {len(row_buffer)} rows")
 
@@ -317,8 +325,10 @@ def process_data(
         processor_type: Type of processor (MotherDuck or PostgreSQL)
         expected_columns: Dict of expected column names and types for validation
     """
-    logger.info(f"Starting NAPTAN data processing from {download_link} for {processor_type}")
-    
+    logger.info(
+        f"Starting NAPTAN data processing from {download_link} for {processor_type}"
+    )
+
     try:
         process_naptan(
             download_link=download_link,
