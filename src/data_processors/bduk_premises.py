@@ -134,7 +134,7 @@ def stream_csv_from_zip(
                 )
 
                 # Only process CSV files
-                if file_name_str.lower().endswith(".csv"):
+                if str(file_name_str).lower().endswith(".csv"):
                     logger.info(f"Processing CSV: {file_name_str}")
 
                     # Stream CSV processing

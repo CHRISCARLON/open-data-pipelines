@@ -6,8 +6,9 @@ from .data_source_config import (
     DataSourceConfig,
 )
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from loguru import logger
+from typing import cast
 
 
 class BDUKPremises(DataSourceConfig):
@@ -67,18 +68,26 @@ class BDUKPremises(DataSourceConfig):
             region_links = {}
             # Find sections that are attachments (filter for .zip)
             for section in soup.find_all("section", class_="gem-c-attachment"):
+                if not isinstance(section, Tag):
+                    continue
+
                 link = section.find("a", href=True)
+                if not isinstance(link, Tag):
+                    continue
+
                 title_el = section.find("h3", class_="gem-c-attachment__title")
-                if link and ".zip" in link["href"]:
-                    url = link["href"]
+
+                href_attr = str(link.get("href", ""))
+                if href_attr and ".zip" in href_attr:
+                    url = href_attr
                     if url.startswith("/"):
                         url = f"https://www.gov.uk{url}"
                     if url.startswith("https://assets.publishing.service.gov.uk"):
                         pass
-                    elif link["href"].startswith(
+                    elif str(link.get("href", "")).startswith(
                         "https://assets.publishing.service.gov.uk"
                     ):
-                        url = link["href"]
+                        url = str(link.get("href", ""))
                     # Extract region name from title
                     region = title_el.get_text(strip=True) if title_el else url
                     region_links[url] = region
