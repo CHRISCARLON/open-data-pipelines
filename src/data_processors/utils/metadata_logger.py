@@ -5,8 +5,8 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import Any
 from loguru import logger
-from data_sources.data_source_config import DataSourceConfig
-from data_processors.utils.data_processor_utils import insert_table
+from ...data_sources.data_source_config import DataSourceConfig
+from ...data_processors.utils.data_processor_utils import insert_table
 
 
 class MetadataTracker:

@@ -1,5 +1,5 @@
 from typing import Any, Dict, Protocol
-from data_sources.data_source_config import DataSourceConfig
+from ..data_sources.data_source_config import DataSourceConfig
 
 
 class DatabaseProtocolTrait(Protocol):

@@ -3,7 +3,7 @@ import time
 import psycopg2
 
 from loguru import logger
-from data_sources.data_source_config import DataProcessorType
+from ...data_sources.data_source_config import DataProcessorType
 
 
 def insert_into_motherduck(df: pd.DataFrame, conn, schema: str, table: str) -> bool:
