@@ -7,6 +7,10 @@ import zipfile
 import csv
 import pandas as pd
 from tqdm import tqdm
+from typing import Optional
+from ..data_sources.data_source_config import DataProcessorType, DataSourceConfig
+from ..data_processors.utils.metadata_logger import metadata_tracker
+from ..data_processors.utils.data_processor_utils import insert_table
 
 
 def insert_into_motherduck(df, conn, schema: str, table: str):
@@ -61,7 +65,7 @@ def insert_into_motherduck(df, conn, schema: str, table: str):
     return False
 
 
-def load_csv_data(url: str, conn, batch_limit: int, schema: str, name: str):
+def load_csv_data(url: str, conn, batch_limit: int, schema: str, name: str, processor_type: DataProcessorType):
     """
     Function to stream and process CSV data in batches.
 
@@ -71,6 +75,7 @@ def load_csv_data(url: str, conn, batch_limit: int, schema: str, name: str):
         batch_limit (int): Number of rows to process in each batch
         schema (str): Database schema
         name (str): Table name
+        processor_type: Type of database processor
     """
     fieldnames = [
         "CORRELATION_ID",
@@ -85,6 +90,7 @@ def load_csv_data(url: str, conn, batch_limit: int, schema: str, name: str):
 
     errors = []
     total_rows_processed = 0
+    file_size = 0
 
     def handle_error(message, exception=None, row_num=None):
         """Closure for consistent error handling"""
@@ -106,7 +112,7 @@ def load_csv_data(url: str, conn, batch_limit: int, schema: str, name: str):
 
         try:
             df_chunk = pd.DataFrame(batch)
-            insert_into_motherduck(df_chunk, conn, schema, name)
+            insert_table(df_chunk, conn, schema, name, processor_type)
 
             batch_size = len(batch)
             total_rows_processed += batch_size
@@ -132,6 +138,7 @@ def load_csv_data(url: str, conn, batch_limit: int, schema: str, name: str):
 
             # Add progress bar for download
             total_size = int(response.headers.get("content-length", 0))
+            file_size = total_size  # Store for metadata
             logger.info(f"Downloading {total_size/1024/1024:.2f} MB")
 
             with open(zip_path, "wb") as zip_file:
@@ -202,10 +209,64 @@ def load_csv_data(url: str, conn, batch_limit: int, schema: str, name: str):
             f"Completed processing. Total rows processed: {total_rows_processed}"
         )
 
+    return total_rows_processed, file_size
 
-def process_data(url: str, conn, batch_limit: int, schema_name: str, table_name: str):
+
+def process_data(
+    url: str, 
+    conn, 
+    batch_limit: int, 
+    schema_name: str, 
+    table_name: str,
+    processor_type: Optional[DataProcessorType] = None,
+    config: Optional[DataSourceConfig] = None
+):
     """
     Process the data from the url and insert it into the database.
+    
+    Args:
+        url: URL to fetch data from
+        conn: Database connection
+        batch_limit: Number of rows per batch
+        schema_name: Database schema
+        table_name: Table name
+        processor_type: Type of database processor (for backward compatibility)
+        config: Data source configuration (enables metadata logging if provided)
     """
-    # Load the data
-    load_csv_data(url, conn, batch_limit, schema_name, table_name)
+    if config:
+        proc_type = config.processor_type
+    elif processor_type:
+        proc_type = processor_type
+    else:
+        proc_type = DataProcessorType.MOTHERDUCK  # Default fallback
+
+    logger.info(f"Starting OS USRN-UPRN processing from {url} for {proc_type}")
+
+    # If config is provided, use metadata tracking if not, use the old method
+    if config:
+        with metadata_tracker(config, conn, url) as tracker:
+            try:
+                total_rows, file_size = load_csv_data(
+                    url, conn, batch_limit, schema_name, table_name, proc_type
+                )
+                
+                # Update tracker with processing stats
+                tracker.set_rows_processed(total_rows)
+                tracker.set_file_size(file_size)
+                tracker.add_info("batch_limit", batch_limit)
+                tracker.add_info("fieldnames_count", 8) 
+                
+                logger.success(f"Data inserted into {schema_name}.{table_name}")
+                
+            except Exception as e:
+                logger.error(f"Error processing data: {e}")
+                raise
+    else:
+        # Backward compatibility - no metadata tracking - but you should always use the method above
+        logger.warning("No config provided - metadata logging disabled")
+        try:
+            load_csv_data(url, conn, batch_limit, schema_name, table_name, proc_type)
+            logger.success(f"Data inserted into {schema_name}.{table_name}")
+        except Exception as e:
+            logger.error(f"Error processing data: {e}")
+            raise

@@ -1,12 +1,12 @@
-name: Geoplace SWA
+name: OS USRNs
 
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
-  schedule:
-    - cron: "30 1 1,15 * *"
+  # schedule:
+  #   - cron: "30 1 5 * *"
 
 jobs:
   run-pipeline:
@@ -27,8 +27,8 @@ jobs:
       - name: Install the project
         run: uv sync --no-cache
 
-      - name: Run geoplace swa pipeline
-        run: uv run -m src.pipelines.geoplace_swa
+      - name: Run os urns pipeline
+        run: uv run -m src.pipelines.os_urns
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
           MOTHERDB: ${{ secrets.MOTHERDB }}
