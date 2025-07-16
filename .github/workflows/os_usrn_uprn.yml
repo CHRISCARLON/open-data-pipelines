@@ -23,7 +23,7 @@ jobs:
       - name: Install the project
         run: uv sync --no-cache
 
-      - name: Run os urns pipeline
+      - name: Run os usrn uprn pipeline
         run: uv run -m src.pipelines.os_usrn_uprn
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
