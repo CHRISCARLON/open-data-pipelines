@@ -28,7 +28,7 @@ jobs:
         run: uv sync --no-cache
 
       - name: Run os urns pipeline
-        run: uv run -m src.pipelines.os_urns
+        run: uv run -m src.pipelines.os_usrns
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
           MOTHERDB: ${{ secrets.MOTHERDB }}
