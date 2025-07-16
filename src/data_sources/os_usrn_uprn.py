@@ -100,6 +100,56 @@ class OsUsrnUprn(DataSourceConfig):
             "confidence": "VARCHAR",
         }
 
+    @property
+    def metadata_schema_name(self) -> str:
+        """Get the metadata schema name for tracking processing information."""
+        return "metadata_logs"
+
+    @property
+    def metadata_table_name(self) -> str:
+        """Get the metadata table name for logging processing runs."""
+        return "processing_logs"
+
+    @property
+    def metadata_db_template(self) -> dict:
+        """Get the database template for metadata logging table."""
+        if self.processor_type == DataProcessorType.POSTGRESQL:
+            return {
+                "log_id": "SERIAL PRIMARY KEY",
+                "data_source": "VARCHAR(100)",
+                "schema_name": "VARCHAR(100)",
+                "table_name": "VARCHAR(100)",
+                "processor_type": "VARCHAR(50)",
+                "url": "TEXT",
+                "start_time": "TIMESTAMP",
+                "end_time": "TIMESTAMP",
+                "duration_seconds": "DOUBLE PRECISION",
+                "rows_processed": "BIGINT",
+                "file_size_bytes": "BIGINT",
+                "status": "VARCHAR(20)",
+                "error_message": "TEXT",
+                "additional_info": "TEXT",
+                "created_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+            }
+        else:  # MotherDuck
+            return {
+                "log_id": "VARCHAR(36) PRIMARY KEY",
+                "data_source": "VARCHAR",
+                "schema_name": "VARCHAR", 
+                "table_name": "VARCHAR",
+                "processor_type": "VARCHAR",
+                "url": "VARCHAR",
+                "start_time": "TIMESTAMP",
+                "end_time": "TIMESTAMP",
+                "duration_seconds": "DOUBLE",
+                "rows_processed": "BIGINT",
+                "file_size_bytes": "BIGINT",
+                "status": "VARCHAR",
+                "error_message": "VARCHAR",
+                "additional_info": "TEXT",
+                "created_at": "TIMESTAMP",
+            }
+
     def __str__(self) -> str:
         """String representation of the configuration."""
         links_str = ", ".join(self.download_links[:2])

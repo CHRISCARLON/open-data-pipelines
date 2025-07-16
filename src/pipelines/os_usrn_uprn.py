@@ -12,7 +12,6 @@ def main():
         raise ValueError("MOTHERDUCK_TOKEN and MOTHERDB must be set")
         
     config = OsUsrnUprn.create_default_latest()
-    logger.info(f"Config: {config}")
 
     with MotherDuckManager(token, database) as db_manager:
         db_manager.setup_for_data_source(config)
