@@ -1,7 +1,6 @@
 import os
 
 from ..databases.motherduck import MotherDuckManager
-from loguru import logger
 from ..data_sources.os_usrn_uprn import OsUsrnUprn
 from ..data_processors.os_usrn_uprn import process_data as process_os_usrn_uprn
 from ..data_processors.utils.metadata_logger import ensure_metadata_schema_exists

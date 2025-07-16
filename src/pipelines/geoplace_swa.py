@@ -1,7 +1,6 @@
 import os
 
 from ..databases.motherduck import MotherDuckManager
-from loguru import logger
 from ..data_sources.geoplace_swa import GeoplaceSwa
 from ..data_processors.geoplace_swa import process_data as process_geoplace_swa
 from ..data_processors.utils.metadata_logger import ensure_metadata_schema_exists
