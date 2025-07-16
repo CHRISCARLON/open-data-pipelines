@@ -1,12 +1,12 @@
-name: OS USRNs
+name: OS USRN UPRN
 
 on:
-  push:
-    branches: [main, master]
   pull_request:
     branches: [main, master]
-  # schedule:
-  #   - cron: "30 1 5 * *"
+  push:
+    branches: [main, master]
+  schedule:
+    - cron: "30 1 5 * *"
 
 jobs:
   run-pipeline:
@@ -28,7 +28,7 @@ jobs:
         run: uv sync --no-cache
 
       - name: Run os urns pipeline
-        run: uv run -m src.pipelines.os_usrns
+        run: uv run -m src.pipelines.os_usrn_uprn
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
           MOTHERDB: ${{ secrets.MOTHERDB }}

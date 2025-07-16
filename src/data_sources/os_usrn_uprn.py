@@ -6,6 +6,8 @@ from .data_source_config import (
     DataSourceConfig,
 )
 from datetime import datetime
+import requests
+from datetime import datetime, timedelta
 
 
 class OsUsrnUprn(DataSourceConfig):
@@ -56,23 +58,39 @@ class OsUsrnUprn(DataSourceConfig):
     @property
     def download_links(self) -> list[str]:
         """
-        Constructs a direct download URL for USRN-UPRN data using the current month.
-
+        Constructs download URL with fallback strategy for USRN-UPRN data.
+        
         Returns:
             list[str]: List containing the download URL for USRN-UPRN data
         """
-        # Get current date information
+        # Try different months, starting from current and going backwards
         now = datetime.now()
-        # Format as YYYY-MM (e.g., 2025-03)
-        date_format = f"{now.year}-{now.month:02d}"
-
-        # Construct the URL with the current date
-        file_name = f"lids-{date_format}_csv_BLPU-UPRN-Street-USRN-11.zip"
-
-        download_url = (
-            f"{self.base_url}?area=GB&format=CSV&fileName={file_name}&redirect"
+        
+        # List of months to try (current, then previous months)
+        months_to_try = []
+        for i in range(6):  # Try current month and 5 months back
+            test_date = now - timedelta(days=30 * i)
+            months_to_try.append(f"{test_date.year}-{test_date.month:02d}")
+        
+        for i in range(1, 4): 
+            test_date = now + timedelta(days=30 * i)
+            months_to_try.append(f"{test_date.year}-{test_date.month:02d}")
+        
+        for date_format in months_to_try:
+            file_name = f"lids-{date_format}_csv_BLPU-UPRN-Street-USRN-11.zip"
+            test_url = f"{self.base_url}?area=GB&format=CSV&fileName={file_name}&redirect"
+            
+            try:
+                response = requests.head(test_url, timeout=10)
+                if response.status_code == 200:
+                    return [test_url]
+            except requests.RequestException as e:
+                continue
+        
+        raise ValueError(
+            f"No valid USRN-UPRN download URL found. Tried months: {months_to_try}. "
+            "The OS API may have changed or no recent data is available."
         )
-        return [download_url]
 
     @property
     def table_names(self) -> List[str]:
