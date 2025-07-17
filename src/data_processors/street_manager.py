@@ -58,7 +58,7 @@ def insert_table_to_motherduck(
 
             if "lease expired" in str(e) and attempt < max_retries - 1:
                 wait_time = (2**attempt) * base_delay
-                logger.warning(f"Connection lease expired (attempt {attempt+1}): {e}")
+                logger.warning(f"Connection lease expired (attempt {attempt + 1}): {e}")
                 logger.info(f"Retrying in {wait_time} seconds...")
                 time.sleep(wait_time)
             else:

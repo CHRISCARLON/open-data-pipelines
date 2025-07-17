@@ -65,7 +65,14 @@ def insert_into_motherduck(df, conn, schema: str, table: str):
     return False
 
 
-def load_csv_data(url: str, conn, batch_limit: int, schema: str, name: str, processor_type: DataProcessorType):
+def load_csv_data(
+    url: str,
+    conn,
+    batch_limit: int,
+    schema: str,
+    name: str,
+    processor_type: DataProcessorType,
+):
     """
     Function to stream and process CSV data in batches.
 
@@ -139,7 +146,7 @@ def load_csv_data(url: str, conn, batch_limit: int, schema: str, name: str, proc
             # Add progress bar for download
             total_size = int(response.headers.get("content-length", 0))
             file_size = total_size  # Store for metadata
-            logger.info(f"Downloading {total_size/1024/1024:.2f} MB")
+            logger.info(f"Downloading {total_size / 1024 / 1024:.2f} MB")
 
             with open(zip_path, "wb") as zip_file:
                 with tqdm(
@@ -169,7 +176,7 @@ def load_csv_data(url: str, conn, batch_limit: int, schema: str, name: str, proc
 
             # Get total line count for progress bar
             total_lines = sum(1 for _ in open(csv_file))
-            logger.info(f"Processing {total_lines-1} rows from CSV")  # -1 for header
+            logger.info(f"Processing {total_lines - 1} rows from CSV")  # -1 for header
 
             # Process CSV data
             current_batch = []
@@ -213,17 +220,17 @@ def load_csv_data(url: str, conn, batch_limit: int, schema: str, name: str, proc
 
 
 def process_data(
-    url: str, 
-    conn, 
-    batch_limit: int, 
-    schema_name: str, 
+    url: str,
+    conn,
+    batch_limit: int,
+    schema_name: str,
     table_name: str,
     processor_type: Optional[DataProcessorType] = None,
-    config: Optional[DataSourceConfig] = None
+    config: Optional[DataSourceConfig] = None,
 ):
     """
     Process the data from the url and insert it into the database.
-    
+
     Args:
         url: URL to fetch data from
         conn: Database connection
@@ -249,15 +256,15 @@ def process_data(
                 total_rows, file_size = load_csv_data(
                     url, conn, batch_limit, schema_name, table_name, proc_type
                 )
-                
+
                 # Update tracker with processing stats
                 tracker.set_rows_processed(total_rows)
                 tracker.set_file_size(file_size)
                 tracker.add_info("batch_limit", batch_limit)
-                tracker.add_info("fieldnames_count", 8) 
-                
+                tracker.add_info("fieldnames_count", 8)
+
                 logger.success(f"Data inserted into {schema_name}.{table_name}")
-                
+
             except Exception as e:
                 logger.error(f"Error processing data: {e}")
                 raise

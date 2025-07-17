@@ -58,7 +58,7 @@ class OsUsrnUprn(DataSourceConfig):
     def download_links(self) -> list[str]:
         """
         Constructs download URL using last month's data for USRN-UPRN.
-        
+
         Returns:
             list[str]: List containing the download URL for USRN-UPRN data
         """
@@ -66,10 +66,12 @@ class OsUsrnUprn(DataSourceConfig):
         now = datetime.now()
         last_month = now - timedelta(days=30)
         date_format = f"{last_month.year}-{last_month.month:02d}"
-        
+
         file_name = f"lids-{date_format}_csv_BLPU-UPRN-Street-USRN-11.zip"
-        download_url = f"{self.base_url}?area=GB&format=CSV&fileName={file_name}&redirect"
-        
+        download_url = (
+            f"{self.base_url}?area=GB&format=CSV&fileName={file_name}&redirect"
+        )
+
         return [download_url]
 
     @property
@@ -135,7 +137,7 @@ class OsUsrnUprn(DataSourceConfig):
             return {
                 "log_id": "VARCHAR(36) PRIMARY KEY",
                 "data_source": "VARCHAR",
-                "schema_name": "VARCHAR", 
+                "schema_name": "VARCHAR",
                 "table_name": "VARCHAR",
                 "processor_type": "VARCHAR",
                 "url": "VARCHAR",

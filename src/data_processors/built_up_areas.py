@@ -251,7 +251,7 @@ def load_geopackage_built_up_areas(
                                 df_chunk = pd.DataFrame(features)
                                 insert_into_motherduck(df_chunk, conn, schema, table)
                                 logger.info(
-                                    f"Processed Built Up Areas batch: {i-chunk_size+1} to {i}"
+                                    f"Processed Built Up Areas batch: {i - chunk_size + 1} to {i}"
                                 )
                                 features = []
 

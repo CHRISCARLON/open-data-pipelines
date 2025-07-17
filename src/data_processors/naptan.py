@@ -4,8 +4,9 @@ from typing import Iterator, List, Dict, Tuple, Optional
 import requests
 from loguru import logger
 from tqdm import tqdm
-from data_processors.utils.data_processor_utils import insert_table
-from data_sources.data_source_config import DataProcessorType
+from ..data_processors.utils.data_processor_utils import insert_table
+from ..data_sources.data_source_config import DataProcessorType, DataSourceConfig
+from ..data_processors.utils.metadata_logger import metadata_tracker
 
 
 def validate_column_names(
@@ -206,7 +207,7 @@ def process_streaming_data(
     table_name: str,
     processor_type: DataProcessorType,
     expected_columns: Optional[Dict[str, str]] = None,
-) -> None:
+) -> str:
     """
     Process CSV data from URL using true streaming.
 
@@ -264,82 +265,65 @@ def process_streaming_data(
                 logger.error(error)
             if len(errors) > 5:
                 logger.error(f"... and {len(errors) - 5} more errors")
-
-
-def process_naptan(
-    download_link: str,
-    table_name: str,
-    batch_size: int,
-    conn,
-    schema_name: str,
-    processor_type: DataProcessorType,
-    expected_columns: Optional[Dict[str, str]] = None,
-) -> None:
-    """
-    Process NAPTAN CSV file.
-
-    Args:
-        download_link: CSV URL
-        table_name: Table name
-        batch_size: Batch size for processing
-        conn: Database connection
-        schema_name: Schema name
-        processor_type: Type of processor (MotherDuck or PostgreSQL)
-        expected_columns: Dict of expected column names and types for validation
-    """
-    logger.info(f"Processing NAPTAN data: {table_name}")
-
-    try:
-        process_streaming_data(
-            url=download_link,
-            batch_size=batch_size,
-            conn=conn,
-            schema_name=schema_name,
-            table_name=table_name,
-            processor_type=processor_type,
-            expected_columns=expected_columns,
-        )
-    except Exception as e:
-        logger.error(f"Failed to process {table_name}: {e}")
-        raise
+    return str(total_rows)
 
 
 def process_data(
-    download_link: str,
-    table_name: str,
-    batch_size: int,
+    url: str,
     conn,
+    batch_limit: int,
     schema_name: str,
-    processor_type: DataProcessorType,
-    expected_columns: Optional[Dict[str, str]] = None,
-) -> None:
+    table_name: str,
+    processor_type: Optional[DataProcessorType] = None,
+    config: Optional[DataSourceConfig] = None,
+):
     """
-    Main function to process NAPTAN data with streaming.
+    Process the data from the url and insert it into the database.
 
     Args:
-        download_link: The URL to fetch the CSV data from
-        table_name: The name of the table
-        batch_size: Batch size for processing
-        conn: The database connection (MotherDuck or PostgreSQL)
-        schema_name: The schema of the table
-        processor_type: Type of processor (MotherDuck or PostgreSQL)
-        expected_columns: Dict of expected column names and types for validation
+        url: URL to fetch data from
+        conn: Database connection
+        batch_limit: Number of rows per batch
+        schema_name: Database schema
+        table_name: Table name
+        processor_type: Type of database processor (for backward compatibility)
+        config: Data source configuration (enables metadata logging if provided)
     """
-    logger.info(
-        f"Starting NAPTAN data processing from {download_link} for {processor_type}"
-    )
+    if config:
+        proc_type = config.processor_type
+    elif processor_type:
+        proc_type = processor_type
+    else:
+        proc_type = DataProcessorType.MOTHERDUCK  # Default fallback
 
-    try:
-        process_naptan(
-            download_link=download_link,
-            table_name=table_name,
-            batch_size=batch_size,
-            conn=conn,
-            schema_name=schema_name,
-            processor_type=processor_type,
-            expected_columns=expected_columns,
-        )
-        logger.success("NAPTAN data processing completed successfully")
-    except Exception as e:
-        logger.error(f"Error processing NAPTAN data: {e}")
-        raise
+    logger.info(f"Starting OS USRN-UPRN processing from {url} for {proc_type}")
+
+    # If config is provided, use metadata tracking if not, use the old method
+    if config:
+        with metadata_tracker(config, conn, url) as tracker:
+            try:
+                total_rows = process_streaming_data(
+                    url, conn, batch_limit, schema_name, table_name, proc_type
+                )
+
+                # Update tracker with processing stats
+                tracker.set_rows_processed(int(total_rows))
+                tracker.add_info("batch_limit", batch_limit)
+                tracker.add_info("fieldnames_count", 8)
+
+                logger.success(f"Data inserted into {schema_name}.{table_name}")
+
+            except Exception as e:
+                logger.error(f"Error processing data: {e}")
+                raise
+    else:
+        # Backward compatibility - no metadata tracking - but you should always use the method above
+        logger.warning("No config provided - metadata logging disabled")
+        try:
+            process_streaming_data(
+                url, conn, batch_limit, schema_name, table_name, proc_type
+            )
+            logger.success(f"Data inserted into {schema_name}.{table_name}")
+        except Exception as e:
+            logger.error(f"Error processing data: {e}")
+            raise

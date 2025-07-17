@@ -7,9 +7,11 @@ from ..data_processors.utils.metadata_logger import ensure_metadata_schema_exist
 
 
 def main():
-    if not (token := os.getenv("MOTHERDUCK_TOKEN")) or not (database := os.getenv("MOTHERDB")):
+    if not (token := os.getenv("MOTHERDUCK_TOKEN")) or not (
+        database := os.getenv("MOTHERDB")
+    ):
         raise ValueError("MOTHERDUCK_TOKEN and MOTHERDB must be set")
-        
+
     config = OsUsrnUprn.create_default_latest()
 
     with MotherDuckManager(token, database) as db_manager:

@@ -174,7 +174,7 @@ def load_geopackage_open_usrns(
                                 df_chunk = pd.DataFrame(features)
                                 insert_into_motherduck(df_chunk, conn, schema, table)
                                 logger.info(
-                                    f"Processed features {i-chunk_size+1} to {i}"
+                                    f"Processed features {i - chunk_size + 1} to {i}"
                                 )
 
                                 # Empty the list
