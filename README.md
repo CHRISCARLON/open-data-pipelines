@@ -2,9 +2,8 @@
 
 Data pipelines for working with UK open data sources.
 
-[NOTE!]
-
-- Currently switching most of the data pipelines from AWS to run in Github Actions - this is a work in progress but massively reduces complexity and cost.
+> [!NOTE]
+> Currently switching most of the data pipelines from AWS to run in Github Actions - this is a work in progress but massively reduces complexity and cost.
 
 ## Purpose
 
