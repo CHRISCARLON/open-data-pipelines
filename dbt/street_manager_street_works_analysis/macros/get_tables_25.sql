@@ -1,4 +1,4 @@
-{% macro get_tables() %}
+{% macro get_tables_25() %}
     {% set query %}
         SELECT table_name
         FROM information_schema.tables

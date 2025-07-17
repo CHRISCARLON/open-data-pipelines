@@ -2,7 +2,7 @@
 {{ config(materialized='table', alias=table_alias) }}
 
 WITH all_months AS (
-    {% set tables = get_tables() %}
+    {% set tables = get_tables_24() %}
     {% for table in tables %}
         {% if not loop.first %}UNION ALL{% endif %}
         

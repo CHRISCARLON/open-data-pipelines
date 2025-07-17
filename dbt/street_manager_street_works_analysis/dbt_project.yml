@@ -58,6 +58,11 @@ models:
     emergency_works:
       emergency_works_overview_england:
       emergency_works_overview_england_2024:
+      stg_works_by_authority:
+      int_postcodes:
+      int_works_postcodes_by_authority:
+      emergency_wellbeing:
+      clean_up:
     new_connections:
       new_connections_england:
       new_connections_2024:
