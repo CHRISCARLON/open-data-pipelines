@@ -59,14 +59,10 @@ def clean_naptan_data(
     for col, dtype in expected_columns.items():
         if col in df_cleaned.columns:
             if dtype in ["DOUBLE", "BIGINT"]:
-                df_cleaned[col] = df_cleaned[col].replace(["", "nan", "NaN"], None)
-                try:
-                    df_cleaned[col] = pd.to_numeric(df_cleaned[col], errors="coerce")
-                except Exception:
-                    logger.warning(
-                        f"Setting numeric column {col} to NULL due to conversion issues"
-                    )
-                    df_cleaned[col] = None
+                # First replace empty strings and string representations of NaN with actual NaN
+                df_cleaned[col] = df_cleaned[col].replace(["", "nan", "NaN", "None", " "], pd.NA)
+                # Then convert to numeric, which will convert non-numeric values to NaN
+                df_cleaned[col] = pd.to_numeric(df_cleaned[col], errors="coerce")
 
             elif dtype == "TIMESTAMP":
                 logger.debug(f"Setting timestamp column {col} to NULL")
@@ -295,15 +291,21 @@ def process_data(
         proc_type = processor_type
     else:
         proc_type = DataProcessorType.MOTHERDUCK  # Default fallback
+    
+    # Get expected columns from config's db_template
+    if config:
+        expected_columns = config.db_template
+    else:
+        expected_columns = None
 
-    logger.info(f"Starting OS USRN-UPRN processing from {url} for {proc_type}")
+    logger.info(f"Starting NAPTAN processing from {url} for {proc_type}")
 
     # If config is provided, use metadata tracking if not, use the old method
     if config:
         with metadata_tracker(config, conn, url) as tracker:
-            try:
+            try:                
                 total_rows = process_streaming_data(
-                    url, batch_limit, conn, schema_name, table_name, proc_type
+                    url, batch_limit, conn, schema_name, table_name, proc_type, expected_columns
                 )
 
                 # Update tracker with processing stats
@@ -321,7 +323,7 @@ def process_data(
         logger.warning("No config provided - metadata logging disabled")
         try:
             process_streaming_data(
-                url, conn, batch_limit, schema_name, table_name, proc_type
+                url, batch_limit, conn, schema_name, table_name, proc_type, expected_columns
             )
             logger.success(f"Data inserted into {schema_name}.{table_name}")
         except Exception as e:
