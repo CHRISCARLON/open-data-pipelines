@@ -303,7 +303,7 @@ def process_data(
         with metadata_tracker(config, conn, url) as tracker:
             try:
                 total_rows = process_streaming_data(
-                    url, conn, batch_limit, schema_name, table_name, proc_type
+                    url, batch_limit, conn, schema_name, table_name, proc_type
                 )
 
                 # Update tracker with processing stats
