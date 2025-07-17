@@ -2,6 +2,10 @@
 
 Data pipelines for working with UK open data sources.
 
+[NOTE!]
+
+- Currently switching most of the data pipelines from AWS to run in Github Actions - this is a work in progress but massively reduces complexity and cost.
+
 ## Purpose
 
 This project enables data analysts to perform analysis on UK open data by automating the extraction, loading, and transformation (ELT) of data from various government and public sector sources.
