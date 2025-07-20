@@ -22,7 +22,7 @@ def main():
         process_os_usrn_uprn(
             url=url,
             conn=db_manager.connection,
-            batch_limit=150000,
+            batch_limit=config.batch_limit or 300000,
             schema_name=config.schema_name,
             table_name=config.table_names[0],
             processor_type=config.processor_type,

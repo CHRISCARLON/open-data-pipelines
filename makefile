@@ -4,6 +4,8 @@
 
 include .env
 
+export
+
 # Docker and AWS section
 # AWS ECR Docker deployment configuration
 .PHONY: docker-all docker-login docker-build docker-tag docker-push docker-verify
@@ -88,3 +90,10 @@ git-commit:
 
 git-push:
 	git push
+
+.PHONY: bods-env
+
+bods-env:
+	@echo "BODS Timetables Environment Variables:"
+	export MOTHERDUCK_TOKEN=$(MOTHERDUCK_TOKEN)
+	export MOTHERDB=$(MOTHERDB)

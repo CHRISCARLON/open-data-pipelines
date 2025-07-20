@@ -176,7 +176,7 @@ class OsUsrnUprn(DataSourceConfig):
         return cls(
             processor_type=DataProcessorType.MOTHERDUCK,
             time_range=TimeRange.LATEST,
-            batch_limit=250000,
+            batch_limit=300000,
         )
 
 

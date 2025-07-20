@@ -1,0 +1,30 @@
+name: BODS Timetables
+
+on:
+  schedule:
+    - cron: "30 1 25 * *"
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "pyproject.toml"
+
+      - name: Install the project
+        run: uv sync --no-cache
+
+      - name: Run bods timetables pipeline
+        run: uv run -m src.pipelines.bods_timetables
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          MOTHERDB: ${{ secrets.MOTHERDB }}
