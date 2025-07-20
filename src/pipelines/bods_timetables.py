@@ -21,29 +21,29 @@ def main():
 
     with MotherDuckManager(token, database) as db_manager:
         logger.info("Setting up BODS Timetables database schema...")
-        
+
         db_manager.setup_for_data_source(config)
-        
+
         ensure_metadata_schema_exists(config, db_manager)
-        
-        logger.success(f"BODS Timetables schema setup complete!")
+
+        logger.success("BODS Timetables schema setup complete!")
         logger.info(f"Created schema: {config.schema_name}")
         logger.info(f"Created tables: {', '.join(config.table_names)}")
-        
+
         logger.info("Starting BODS Timetables data processing...")
-        
+
         for url in config.download_links:
             logger.info(f"Processing GTFS data from: {url}")
-            
+
             bods_processor.process_data(
                 url=url,
                 conn=db_manager.connection,
                 batch_limit=config.batch_limit or 300000,
                 schema_name=config.schema_name,
-                table_name="", 
-                config=config
+                table_name="",
+                config=config,
             )
-        
+
         logger.success("BODS Timetables pipeline completed successfully!")
 
 

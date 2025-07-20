@@ -5,8 +5,6 @@ from .data_source_config import (
     TimeRange,
     DataSourceConfig,
 )
-from loguru import logger
-import os
 
 
 class BODSTimetables(DataSourceConfig):
@@ -66,13 +64,13 @@ class BODSTimetables(DataSourceConfig):
         return [
             "agency",
             "calendar",
-            "calendar_dates", 
+            "calendar_dates",
             "feed_info",
             "routes",
             "shapes",
             "stops",
             "stop_times",
-            "trips"
+            "trips",
         ]
 
     @property
@@ -86,24 +84,24 @@ class BODSTimetables(DataSourceConfig):
                 "agency_timezone": "VARCHAR",
                 "agency_lang": "VARCHAR",
                 "agency_phone": "VARCHAR",
-                "agency_noc": "VARCHAR"
+                "agency_noc": "VARCHAR",
             },
             "calendar": {
                 "service_id": "VARCHAR",
                 "monday": "VARCHAR",
-                "tuesday": "VARCHAR", 
+                "tuesday": "VARCHAR",
                 "wednesday": "VARCHAR",
                 "thursday": "VARCHAR",
                 "friday": "VARCHAR",
                 "saturday": "VARCHAR",
                 "sunday": "VARCHAR",
                 "start_date": "VARCHAR",
-                "end_date": "VARCHAR"
+                "end_date": "VARCHAR",
             },
             "calendar_dates": {
                 "service_id": "VARCHAR",
                 "date": "VARCHAR",
-                "exception_type": "VARCHAR"
+                "exception_type": "VARCHAR",
             },
             "feed_info": {
                 "feed_publisher_name": "VARCHAR",
@@ -111,21 +109,21 @@ class BODSTimetables(DataSourceConfig):
                 "feed_lang": "VARCHAR",
                 "feed_start_date": "VARCHAR",
                 "feed_end_date": "VARCHAR",
-                "feed_version": "VARCHAR"
+                "feed_version": "VARCHAR",
             },
             "routes": {
                 "route_id": "VARCHAR",
                 "agency_id": "VARCHAR",
                 "route_short_name": "VARCHAR",
                 "route_long_name": "VARCHAR",
-                "route_type": "VARCHAR"
+                "route_type": "VARCHAR",
             },
             "shapes": {
                 "shape_id": "VARCHAR",
                 "shape_pt_lat": "VARCHAR",
-                "shape_pt_lon": "VARCHAR", 
+                "shape_pt_lon": "VARCHAR",
                 "shape_pt_sequence": "VARCHAR",
-                "shape_dist_traveled": "VARCHAR"
+                "shape_dist_traveled": "VARCHAR",
             },
             "stops": {
                 "stop_id": "VARCHAR",
@@ -136,7 +134,7 @@ class BODSTimetables(DataSourceConfig):
                 "wheelchair_boarding": "VARCHAR",
                 "location_type": "VARCHAR",
                 "parent_station": "VARCHAR",
-                "platform_code": "VARCHAR"
+                "platform_code": "VARCHAR",
             },
             "stop_times": {
                 "trip_id": "VARCHAR",
@@ -148,7 +146,7 @@ class BODSTimetables(DataSourceConfig):
                 "pickup_type": "VARCHAR",
                 "drop_off_type": "VARCHAR",
                 "shape_dist_traveled": "VARCHAR",
-                "timepoint": "VARCHAR"
+                "timepoint": "VARCHAR",
             },
             "trips": {
                 "route_id": "VARCHAR",
@@ -159,8 +157,8 @@ class BODSTimetables(DataSourceConfig):
                 "block_id": "VARCHAR",
                 "shape_id": "VARCHAR",
                 "wheelchair_accessible": "VARCHAR",
-                "vehicle_journey_code": "VARCHAR"
-            }
+                "vehicle_journey_code": "VARCHAR",
+            },
         }
 
     @property

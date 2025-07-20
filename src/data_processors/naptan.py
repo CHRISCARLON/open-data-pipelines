@@ -60,7 +60,9 @@ def clean_naptan_data(
         if col in df_cleaned.columns:
             if dtype in ["DOUBLE", "BIGINT"]:
                 # First replace empty strings and string representations of NaN with actual NaN
-                df_cleaned[col] = df_cleaned[col].replace(["", "nan", "NaN", "None", " "], pd.NA)
+                df_cleaned[col] = df_cleaned[col].replace(
+                    ["", "nan", "NaN", "None", " "], pd.NA
+                )
                 # Then convert to numeric, which will convert non-numeric values to NaN
                 df_cleaned[col] = pd.to_numeric(df_cleaned[col], errors="coerce")
 
@@ -291,7 +293,7 @@ def process_data(
         proc_type = processor_type
     else:
         proc_type = DataProcessorType.MOTHERDUCK  # Default fallback
-    
+
     # Get expected columns from config's db_template
     if config:
         expected_columns = config.db_template
@@ -303,9 +305,15 @@ def process_data(
     # If config is provided, use metadata tracking if not, use the old method
     if config:
         with metadata_tracker(config, conn, url) as tracker:
-            try:                
+            try:
                 total_rows = process_streaming_data(
-                    url, batch_limit, conn, schema_name, table_name, proc_type, expected_columns
+                    url,
+                    batch_limit,
+                    conn,
+                    schema_name,
+                    table_name,
+                    proc_type,
+                    expected_columns,
                 )
 
                 # Update tracker with processing stats
@@ -323,7 +331,13 @@ def process_data(
         logger.warning("No config provided - metadata logging disabled")
         try:
             process_streaming_data(
-                url, batch_limit, conn, schema_name, table_name, proc_type, expected_columns
+                url,
+                batch_limit,
+                conn,
+                schema_name,
+                table_name,
+                proc_type,
+                expected_columns,
             )
             logger.success(f"Data inserted into {schema_name}.{table_name}")
         except Exception as e:

@@ -11,7 +11,9 @@ from ..data_processors.utils.metadata_logger import metadata_tracker
 from ..data_processors.utils.data_processor_utils import insert_table
 
 
-def insert_into_motherduck_with_retry(df: pd.DataFrame, conn, schema: str, table: str) -> bool:
+def insert_into_motherduck_with_retry(
+    df: pd.DataFrame, conn, schema: str, table: str
+) -> bool:
     """
     Insert DataFrame into MotherDuck with retry logic.
     """
@@ -59,28 +61,26 @@ def get_table_name_from_filename(filename: str) -> Optional[str]:
     GTFS files are like agency.txt, routes.txt etc.
     """
     # Remove .txt extension and get base name
-    base_name = filename.lower().replace('.txt', '')
-    
+    base_name = filename.lower().replace(".txt", "")
+
     # Map of GTFS filenames to our table names
     gtfs_mapping = {
-        'agency': 'agency',
-        'calendar': 'calendar', 
-        'calendar_dates': 'calendar_dates',
-        'feed_info': 'feed_info',
-        'routes': 'routes',
-        'shapes': 'shapes',
-        'stops': 'stops',
-        'stop_times': 'stop_times',
-        'trips': 'trips'
+        "agency": "agency",
+        "calendar": "calendar",
+        "calendar_dates": "calendar_dates",
+        "feed_info": "feed_info",
+        "routes": "routes",
+        "shapes": "shapes",
+        "stops": "stops",
+        "stop_times": "stop_times",
+        "trips": "trips",
     }
-    
+
     return gtfs_mapping.get(base_name)
 
 
 def stream_gtfs_csv_from_zip(
-    zip_url: str, 
-    batch_size: int, 
-    expected_tables: Dict[str, Dict[str, str]]
+    zip_url: str, batch_size: int, expected_tables: Dict[str, Dict[str, str]]
 ) -> Iterator[tuple[str, pd.DataFrame]]:
     """
     Stream GTFS CSV files from a ZIP archive.
@@ -102,7 +102,9 @@ def stream_gtfs_csv_from_zip(
                     yield chunk
 
             # Process ZIP as it streams
-            for file_name, file_size, unzipped_chunks in stream_unzip(chunked_response()):
+            for file_name, file_size, unzipped_chunks in stream_unzip(
+                chunked_response()
+            ):
                 # Handle different types from stream_unzip
                 if isinstance(file_name, (bytes, bytearray)):
                     file_name_str = file_name.decode("utf-8", errors="ignore")
@@ -112,17 +114,19 @@ def stream_gtfs_csv_from_zip(
                     file_name_str = str(file_name)
 
                 # Only process .txt files (GTFS format)
-                if file_name_str.lower().endswith('.txt'):
+                if file_name_str.lower().endswith(".txt"):
                     table_name = get_table_name_from_filename(file_name_str)
-                    
+
                     if table_name and table_name in expected_tables:
-                        logger.info(f"Processing GTFS file: {file_name_str} -> {table_name}")
-                        
+                        logger.info(
+                            f"Processing GTFS file: {file_name_str} -> {table_name}"
+                        )
+
                         # Stream process this file
                         row_buffer = []
                         header = None
                         partial_line = ""
-                        
+
                         try:
                             for chunk in unzipped_chunks:
                                 try:
@@ -141,7 +145,9 @@ def stream_gtfs_csv_from_zip(
 
                                     if header is None:
                                         header = next(csv.reader([line]))
-                                        logger.info(f"Found {len(header)} columns in {file_name_str}")
+                                        logger.info(
+                                            f"Found {len(header)} columns in {file_name_str}"
+                                        )
                                     else:
                                         try:
                                             values = next(csv.reader([line]))
@@ -151,18 +157,24 @@ def stream_gtfs_csv_from_zip(
 
                                                 if len(row_buffer) >= batch_size:
                                                     df_batch = pd.DataFrame(row_buffer)
-                                                    df_batch = df_batch.astype(str).replace("nan", None)
+                                                    df_batch = df_batch.astype(
+                                                        str
+                                                    ).replace("nan", None)
                                                     yield table_name, df_batch
                                                     row_buffer = []
-                                                    logger.debug(f"Yielded batch of {batch_size} rows for {table_name}")
+                                                    logger.debug(
+                                                        f"Yielded batch of {batch_size} rows for {table_name}"
+                                                    )
                                             else:
                                                 logger.warning(
                                                     f"Row has {len(values)} values but header has {len(header)} columns in {file_name_str}"
                                                 )
                                         except csv.Error as e:
-                                            logger.warning(f"Error parsing CSV line in {file_name_str}: {e}")
+                                            logger.warning(
+                                                f"Error parsing CSV line in {file_name_str}: {e}"
+                                            )
                                             continue
-                            
+
                             # Process final partial line
                             if partial_line.strip() and header:
                                 try:
@@ -178,32 +190,36 @@ def stream_gtfs_csv_from_zip(
                                 df_batch = pd.DataFrame(row_buffer)
                                 df_batch = df_batch.astype(str).replace("nan", None)
                                 yield table_name, df_batch
-                                logger.debug(f"Yielded final batch of {len(row_buffer)} rows for {table_name}")
-                                
+                                logger.debug(
+                                    f"Yielded final batch of {len(row_buffer)} rows for {table_name}"
+                                )
+
                         except Exception as e:
                             logger.error(f"Error processing {file_name_str}: {e}")
-                            # Still need to consume remaining chunks if error occurs
                             try:
                                 for _ in unzipped_chunks:
                                     pass
-                            except:
+                            except Exception as e:
+                                logger.error(f"Error consuming chunks: {e}")
                                 pass
-                            
+
                     else:
-                        logger.info(f"Skipping file {file_name_str} (not in expected GTFS tables)")
-                        # Consume chunks without loading into memory
+                        logger.info(
+                            f"Skipping file {file_name_str} (not in expected GTFS tables)"
+                        )
                         try:
                             for _ in unzipped_chunks:
                                 pass
-                        except:
+                        except Exception as e:
+                            logger.error(f"Error consuming chunks: {e}")
                             pass
                 else:
                     logger.debug(f"Skipping non-txt file: {file_name_str}")
-                    # Consume chunks without loading into memory
                     try:
                         for _ in unzipped_chunks:
                             pass
-                    except:
+                    except Exception as e:
+                        logger.error(f"Error consuming chunks: {e}")
                         pass
 
     except Exception as e:
@@ -219,13 +235,13 @@ def process_gtfs_streaming_data(
 ) -> Dict[str, int]:
     """
     Process GTFS data from ZIP URL using streaming.
-    
+
     Args:
         url: URL of the GTFS ZIP file
         batch_size: Batch size for processing
         conn: Database connection
         config: BODS timetables configuration
-        
+
     Returns:
         Dict mapping table names to row counts processed
     """
@@ -235,12 +251,20 @@ def process_gtfs_streaming_data(
 
     try:
         # Process streamed batches
-        for table_name, df_batch in stream_gtfs_csv_from_zip(url, batch_size, config.db_template):
+        for table_name, df_batch in stream_gtfs_csv_from_zip(
+            url, batch_size, config.db_template
+        ):
             total_batches += 1
             batch_rows = len(df_batch)
 
             try:
-                insert_table(df_batch, conn, config.schema_name, table_name, config.processor_type)
+                insert_table(
+                    df_batch,
+                    conn,
+                    config.schema_name,
+                    table_name,
+                    config.processor_type,
+                )
 
                 # Track row counts per table
                 if table_name not in table_row_counts:
@@ -261,7 +285,7 @@ def process_gtfs_streaming_data(
         if not table_row_counts:
             logger.warning(f"No GTFS data found in {url}")
         else:
-            logger.success(f"Completed processing GTFS data:")
+            logger.success("Completed processing GTFS data:")
             for table_name, row_count in table_row_counts.items():
                 logger.success(f"  {table_name}: {row_count:,} rows")
 
@@ -291,7 +315,7 @@ def process_data(
 ):
     """
     Process BODS Timetables GTFS data with metadata tracking.
-    
+
     Args:
         url: URL to fetch GTFS ZIP from
         conn: Database connection
@@ -304,11 +328,13 @@ def process_data(
 
     with metadata_tracker(config, conn, url) as tracker:
         try:
-            table_row_counts = process_gtfs_streaming_data(url, batch_limit, conn, config)
-            
+            table_row_counts = process_gtfs_streaming_data(
+                url, batch_limit, conn, config
+            )
+
             # Calculate total rows processed across all tables
             total_rows = sum(table_row_counts.values())
-            
+
             # Update tracker with processing stats
             tracker.set_rows_processed(total_rows)
             tracker.add_info("batch_limit", batch_limit)
@@ -320,4 +346,4 @@ def process_data(
 
         except Exception as e:
             logger.error(f"Error processing BODS Timetables data: {e}")
-            raise 
+            raise
