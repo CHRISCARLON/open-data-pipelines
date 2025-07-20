@@ -60,10 +60,8 @@ def get_table_name_from_filename(filename: str) -> Optional[str]:
     Map GTFS filenames to table names.
     GTFS files are like agency.txt, routes.txt etc.
     """
-    # Remove .txt extension and get base name
     base_name = filename.lower().replace(".txt", "")
 
-    # Map of GTFS filenames to our table names
     gtfs_mapping = {
         "agency": "agency",
         "calendar": "calendar",
@@ -101,11 +99,9 @@ def stream_gtfs_csv_from_zip(
                     pbar.update(len(chunk))
                     yield chunk
 
-            # Process ZIP as it streams
             for file_name, file_size, unzipped_chunks in stream_unzip(
                 chunked_response()
             ):
-                # Handle different types from stream_unzip
                 if isinstance(file_name, (bytes, bytearray)):
                     file_name_str = file_name.decode("utf-8", errors="ignore")
                 elif isinstance(file_name, memoryview):
@@ -122,7 +118,6 @@ def stream_gtfs_csv_from_zip(
                             f"Processing GTFS file: {file_name_str} -> {table_name}"
                         )
 
-                        # Stream process this file
                         row_buffer = []
                         header = None
                         partial_line = ""
@@ -175,7 +170,6 @@ def stream_gtfs_csv_from_zip(
                                             )
                                             continue
 
-                            # Process final partial line
                             if partial_line.strip() and header:
                                 try:
                                     values = next(csv.reader([partial_line]))
@@ -185,7 +179,6 @@ def stream_gtfs_csv_from_zip(
                                 except csv.Error:
                                     pass
 
-                            # Yield remaining rows for this file
                             if row_buffer:
                                 df_batch = pd.DataFrame(row_buffer)
                                 df_batch = df_batch.astype(str).replace("nan", None)
@@ -266,7 +259,6 @@ def process_gtfs_streaming_data(
                     config.processor_type,
                 )
 
-                # Track row counts per table
                 if table_name not in table_row_counts:
                     table_row_counts[table_name] = 0
                 table_row_counts[table_name] += batch_rows
@@ -304,7 +296,7 @@ def process_gtfs_streaming_data(
 
     return table_row_counts
 
-
+# TODO: need to add errors to metadata tracker, so the function above will probably need to return the errors
 def process_data(
     url: str,
     conn,
