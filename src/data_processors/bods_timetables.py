@@ -296,6 +296,7 @@ def process_gtfs_streaming_data(
 
     return table_row_counts
 
+
 # TODO: need to add errors to metadata tracker, so the function above will probably need to return the errors
 def process_data(
     url: str,

@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 from ..databases.motherduck import MotherDuckManager
 from ..data_sources.street_manager import StreetManager
@@ -21,22 +20,22 @@ def main():
 
     with MotherDuckManager(token, database) as db_manager:
         logger.info("Setting up Street Manager database schema...")
-        
+
         # Setup schema and tables for the data source
         db_manager.setup_for_data_source(config)
-        
+
         # Setup metadata logging
         ensure_metadata_schema_exists(config, db_manager)
-        
+
         logger.success("Street Manager schema setup complete!")
         logger.info(f"Created schema: {config.schema_name}")
         logger.info(f"Created tables: {', '.join(config.table_names)}")
 
         logger.info("Starting Street Manager data processing...")
-        
+
         url = config.download_links[0]
         table_name = config.table_names[0]
-        
+
         logger.info(f"Processing Street Manager data from: {url}")
         logger.info(f"Target table: {config.schema_name}.{table_name}")
 

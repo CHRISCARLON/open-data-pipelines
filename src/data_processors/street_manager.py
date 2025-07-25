@@ -137,12 +137,12 @@ def chunks_to_arrow_table(flattened_data: list[dict[str, Any]]) -> pa.Table:
 
 
 def batch_processor(
-    zipped_chunks: Iterator, 
-    batch_size: int, 
-    conn, 
-    schema_name: str, 
+    zipped_chunks: Iterator,
+    batch_size: int,
+    conn,
+    schema_name: str,
     table_name: str,
-    tracker=None
+    tracker=None,
 ) -> int:
     """
     Process data in batches and insert into MotherDuck.
@@ -168,7 +168,7 @@ def batch_processor(
                     table = chunks_to_arrow_table(flattened_data)
                     insert_table_to_motherduck(table, conn, schema_name, table_name)
                     logger.success(f"Processed batch of {batch_count} items")
-                    
+
                     total_rows_processed += batch_count
                     flattened_data = []
                     batch_count = 0
@@ -205,35 +205,48 @@ def batch_processor(
 
 
 def process_data(
-    url: str, 
-    batch_size: int, 
-    conn, 
-    schema_name: str, 
+    url: str,
+    batch_size: int,
+    conn,
+    schema_name: str,
     table_name: str,
-    config: Optional[DataSourceConfig] = None
+    config: Optional[DataSourceConfig] = None,
 ) -> None:
     """
     Main function to fetch and process data stream with PyArrow and metadata tracking.
     """
-    logger.info(f"Starting data stream processing from {url} with batch size {batch_size}")
+    logger.info(
+        f"Starting data stream processing from {url} with batch size {batch_size}"
+    )
 
     if config:
         with metadata_tracker(config, conn, url) as tracker:
             try:
                 with requests.get(url, stream=True, timeout=15) as response:
                     if response.status_code != 200:
-                        logger.error(f"Failed to fetch data: HTTP {response.status_code}")
+                        logger.error(
+                            f"Failed to fetch data: HTTP {response.status_code}"
+                        )
                         raise Exception(f"HTTP error: {response.status_code}")
 
                     # Get file size from headers if available
-                    file_size = int(response.headers.get('content-length', 0))
+                    file_size = int(response.headers.get("content-length", 0))
                     if file_size > 0:
                         tracker.set_file_size(file_size)
-                        tracker.add_info("file_size_mb", round(file_size / 1024 / 1024, 2))
+                        tracker.add_info(
+                            "file_size_mb", round(file_size / 1024 / 1024, 2)
+                        )
 
                     zipped_chunks = response.iter_content(chunk_size=1048576)
-                    total_rows = batch_processor(zipped_chunks, batch_size, conn, schema_name, table_name, tracker)
-                    
+                    total_rows = batch_processor(
+                        zipped_chunks,
+                        batch_size,
+                        conn,
+                        schema_name,
+                        table_name,
+                        tracker,
+                    )
+
                     # Update tracker with processing stats
                     tracker.set_rows_processed(total_rows)
                     tracker.add_info("batch_size", batch_size)
@@ -251,7 +264,9 @@ def process_data(
                     raise Exception(f"HTTP error: {response.status_code}")
 
                 zipped_chunks = response.iter_content(chunk_size=1048576)
-                batch_processor(zipped_chunks, batch_size, conn, schema_name, table_name)
+                batch_processor(
+                    zipped_chunks, batch_size, conn, schema_name, table_name
+                )
 
         except Exception as e:
             logger.error(f"Error processing data: {e}")
