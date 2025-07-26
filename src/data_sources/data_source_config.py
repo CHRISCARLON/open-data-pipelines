@@ -58,7 +58,7 @@ class DataSourceType(Enum):
     )
     BODS_TIMETABLES = (
         "bods_timetables",
-        "https://data.bus-data.dft.gov.uk/timetable/download/gtfs-file/north_west/",
+        "https://data.bus-data.dft.gov.uk/timetable/download/gtfs-file/london/",
     )
     # Add other data sources as needed
 
