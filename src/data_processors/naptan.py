@@ -1,6 +1,5 @@
 import csv
 import pandas as pd
-from datetime import datetime
 from typing import Iterator, List, Dict, Tuple, Optional
 import requests
 from loguru import logger
