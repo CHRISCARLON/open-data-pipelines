@@ -112,7 +112,6 @@ class Naptan(DataSourceConfig):
             "RevisionNumber": "BIGINT",
             "Modification": "VARCHAR",
             "Status": "VARCHAR",
-            "date_time_processed": "TIMESTAMP",
         }
 
     @property

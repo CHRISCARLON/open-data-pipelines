@@ -70,9 +70,6 @@ def clean_naptan_data(
                 df_cleaned[col] = (
                     df_cleaned[col].astype(str).replace(["nan", "NaN", "None"], None)
                 )
-
-    df_cleaned["date_time_processed"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
     logger.debug(f"Cleaned DataFrame shape: {df_cleaned.shape}")
     return df_cleaned
 
