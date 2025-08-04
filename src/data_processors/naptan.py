@@ -1,5 +1,6 @@
 import csv
 import pandas as pd
+from datetime import datetime
 from typing import Iterator, List, Dict, Tuple, Optional
 import requests
 from loguru import logger
@@ -27,12 +28,10 @@ def validate_column_names(
 
     issues = []
 
-    # Check for missing columns
     missing = expected_names - actual_names
     if missing:
         issues.append(f"Missing columns: {', '.join(sorted(missing))}")
 
-    # Check for extra columns
     extra = actual_names - expected_names
     if extra:
         issues.append(f"Unexpected columns: {', '.join(sorted(extra))}")
@@ -55,15 +54,12 @@ def clean_naptan_data(
     """
     df_cleaned = df.copy()
 
-    # Handle different data types - when in doubt, set to NULL
     for col, dtype in expected_columns.items():
         if col in df_cleaned.columns:
             if dtype in ["DOUBLE", "BIGINT"]:
-                # First replace empty strings and string representations of NaN with actual NaN
                 df_cleaned[col] = df_cleaned[col].replace(
                     ["", "nan", "NaN", "None", " "], pd.NA
                 )
-                # Then convert to numeric, which will convert non-numeric values to NaN
                 df_cleaned[col] = pd.to_numeric(df_cleaned[col], errors="coerce")
 
             elif dtype == "TIMESTAMP":
@@ -74,6 +70,8 @@ def clean_naptan_data(
                 df_cleaned[col] = (
                     df_cleaned[col].astype(str).replace(["nan", "NaN", "None"], None)
                 )
+
+    df_cleaned["date_time_processed"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     logger.debug(f"Cleaned DataFrame shape: {df_cleaned.shape}")
     return df_cleaned
@@ -96,13 +94,11 @@ def stream_csv_from_url(
     try:
         logger.info(f"Starting stream from {csv_url}")
 
-        # Start streaming with a larger timeout for NAPTAN
         response = requests.get(csv_url, stream=True, timeout=60)
         response.raise_for_status()
 
         total_size = int(response.headers.get("content-length", 0))
 
-        # Stream data
         with tqdm(
             total=total_size, unit="B", unit_scale=True, desc="Streaming CSV"
         ) as pbar:
@@ -171,7 +167,6 @@ def stream_csv_from_url(
                                 logger.warning(f"Error parsing CSV line: {e}")
                                 continue
 
-            # Process final partial line if exists
             if partial_line.strip() and header:
                 try:
                     values = next(csv.reader([partial_line]))
@@ -181,11 +176,9 @@ def stream_csv_from_url(
                 except csv.Error:
                     pass
 
-            # Yield remaining rows
             if row_buffer:
                 df_batch = pd.DataFrame(row_buffer)
 
-                # Clean the data if expected_columns provided
                 if expected_columns:
                     df_batch = clean_naptan_data(df_batch, expected_columns)
 
@@ -292,9 +285,8 @@ def process_data(
     elif processor_type:
         proc_type = processor_type
     else:
-        proc_type = DataProcessorType.MOTHERDUCK  # Default fallback
+        proc_type = DataProcessorType.MOTHERDUCK
 
-    # Get expected columns from config's db_template
     if config:
         expected_columns = config.db_template
     else:
@@ -302,7 +294,6 @@ def process_data(
 
     logger.info(f"Starting NAPTAN processing from {url} for {proc_type}")
 
-    # If config is provided, use metadata tracking if not, use the old method
     if config:
         with metadata_tracker(config, conn, url) as tracker:
             try:
@@ -327,7 +318,6 @@ def process_data(
                 logger.error(f"Error processing data: {e}")
                 raise
     else:
-        # Backward compatibility - no metadata tracking - but you should always use the method above
         logger.warning("No config provided - metadata logging disabled")
         try:
             process_streaming_data(
