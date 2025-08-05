@@ -104,8 +104,7 @@ class OsUsrnUprn(DataSourceConfig):
 
     @property
     def metadata_schema_name(self) -> str:
-        """Get the metadata schema name for tracking processing information."""
-        return "metadata_logs"
+        return f"{self.schema_name}"
 
     @property
     def metadata_table_name(self) -> str:

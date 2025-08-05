@@ -198,7 +198,7 @@ def load_geopackage_open_usrns(
         raise
     finally:
         if errors:
-            logger.error(f"Total errors encountered: {len(errors)}")
+            logger.info(f"Total errors encountered: {len(errors)}")
             if tracker:
                 tracker.add_info("errors", len(errors))
                 tracker.add_info("errors", errors)
