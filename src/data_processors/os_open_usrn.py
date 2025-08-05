@@ -200,24 +200,26 @@ def load_geopackage_open_usrns(
         if errors:
             logger.error(f"Total errors encountered: {len(errors)}")
             if tracker:
-                tracker.add_error(len(errors))
+                tracker.add_info("errors", len(errors))
                 tracker.add_info("errors", errors)
     return None
 
 
 def process_data(
-    url: str, 
-    conn, 
-    batch_size: int, 
-    schema_name: str, 
+    url: str,
+    conn,
+    batch_size: int,
+    schema_name: str,
     table_name: str,
-    config: Optional[DataSourceConfig] = None
+    config: Optional[DataSourceConfig] = None,
 ):
     """
     Process the data from the url and insert it into the motherduck table.
     """
-    logger.info(f"Starting data stream processing from {url} with batch size {batch_size}")
-    
+    logger.info(
+        f"Starting data stream processing from {url} with batch size {batch_size}"
+    )
+
     if config:
         with metadata_tracker(config, conn, url) as tracker:
             try:
@@ -225,10 +227,12 @@ def process_data(
                 load_geopackage_open_usrns(
                     redirect_url, conn, batch_size, schema_name, table_name, tracker
                 )
-                logger.success(f"USRN data processing completed successfully")
+                logger.success("USRN data processing completed successfully")
             except Exception as e:
                 logger.error(f"Error processing USRN data: {e}")
                 raise
     else:
         redirect_url = fetch_redirect_url(url)
-        load_geopackage_open_usrns(redirect_url, conn, batch_size, schema_name, table_name)
+        load_geopackage_open_usrns(
+            redirect_url, conn, batch_size, schema_name, table_name
+        )

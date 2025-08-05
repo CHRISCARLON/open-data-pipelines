@@ -20,7 +20,7 @@ def main():
 
         url = config.download_links[0]
         print(f"Processing USRN data from {url}")
-        
+
         process_os_usrn(
             url=url,
             conn=db_manager.connection,

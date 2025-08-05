@@ -6,7 +6,6 @@ from .data_source_config import (
     TimeRange,
     DataSourceConfig,
 )
-from ..data_processors.utils.metadata_logger import metadata_tracker
 
 
 class OsOpenUsrn(DataSourceConfig):
