@@ -120,7 +120,6 @@ class PostgreSQLManager(DatabaseProtocolTrait):
             logger.error(f"No db_template found in the config for {config.source_type}")
             return False
 
-        # Create tables for each table name in the config
         success = True
         for table_name in config.table_names:
             try:

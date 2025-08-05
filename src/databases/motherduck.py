@@ -135,15 +135,13 @@ class MotherDuckManager(DatabaseProtocolTrait):
             )
             return False
 
-        # Get schema name from config
         schema = config.schema_name
 
-        # Get column definitions from the config's db_template property
         if not hasattr(config, "db_template") or not config.db_template:
             logger.error(f"No db_template found in the config for {config.source_type}")
             return False
 
-        # Create tables for each table name in the config
+
         success = True
         for table_name in config.table_names:
             try:

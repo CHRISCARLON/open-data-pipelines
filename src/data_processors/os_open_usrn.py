@@ -9,6 +9,10 @@ from shapely.geometry import shape
 from loguru import logger
 from tqdm import tqdm
 import time
+from typing import Optional
+
+from ..data_processors.utils.metadata_logger import metadata_tracker
+from ..data_sources.data_source_config import DataSourceConfig
 
 
 def insert_into_motherduck(df, conn, schema: str, table: str):
@@ -85,7 +89,7 @@ def fetch_redirect_url(url: str) -> str:
 
 
 def load_geopackage_open_usrns(
-    url: str, conn, batch_size: int, schema: str, table: str
+    url: str, conn, batch_size: int, schema: str, table: str, tracker=None
 ):
     """
     Function to load OS open usrn data in batches of 50,000 rows.
@@ -96,28 +100,24 @@ def load_geopackage_open_usrns(
         Url for data
         Connection object
     """
-
-    # This can be changed based on how much memory you want to use overall
     chunk_size = batch_size
-
-    # List to store errors
     errors = []
 
     try:
-        # Download the zip file
         logger.info("Downloading zip file...")
         response = requests.get(url, stream=True)
         response.raise_for_status()
 
-        # Create a temporary directory
+        file_size = len(response.content)
+        if tracker:
+            tracker.set_file_size(file_size)
+
         with tempfile.TemporaryDirectory() as temp_dir:
-            # Write the zip file to the temporary directory and file!
             zip_path = os.path.join(temp_dir, "temp.zip")
             with open(zip_path, "wb") as zip_file:
                 zip_file.write(response.content)
 
             logger.info("Extracting zip file...")
-            # Extract the contents of the zip file
             with zipfile.ZipFile(zip_path, "r") as zip_ref:
                 zip_ref.extractall(temp_dir)
 
@@ -131,32 +131,30 @@ def load_geopackage_open_usrns(
 
             if gpkg_file:
                 try:
-                    # Open the GeoPackage file
                     with fiona.open(gpkg_file, "r") as src:
-                        # Print some of the metadata to check everything is OK
                         crs = src.crs
                         data_schema = src.schema
 
                         logger.info(f"The CRS is: {crs}")
                         logger.info(f"The Data Schema is: {data_schema}")
 
-                        # Get total number of features for the progress bar
                         total_features = len(src)
-                        logger.info(f"Total features to process: {total_features}")
+                        if tracker:
+                            tracker.set_rows_processed(total_features)
+                            tracker.add_info("total_features", total_features)
+                            tracker.add_info("batch_size", batch_size)
+                            tracker.add_info("file_format", "geopackage")
+                            tracker.add_info("crs", str(crs))
 
-                        # List to store extracted features for DataFrame processing
                         features = []
 
-                        # Use tqdm for progress tracking
                         for i, feature in enumerate(
                             tqdm(src, total=total_features, desc="Processing features")
                         ):
                             try:
-                                # Convert geometry to WKT string
                                 geom = shape(feature["geometry"])
                                 feature["properties"]["geometry"] = wkt.dumps(geom)
                             except Exception as e:
-                                # If there's an error converting the geometry, set it to None
                                 feature["properties"]["geometry"] = None
                                 error_msg = (
                                     f"Error converting geometry for feature {i}: {e}"
@@ -164,30 +162,23 @@ def load_geopackage_open_usrns(
                                 logger.warning(error_msg)
                                 errors.append(error_msg)
 
-                            # Append each feature to the list
                             features.append(feature["properties"])
 
-                            # When the list hits the limit size - e.g. 75,000
-                            # Process list into DataFrame
                             if len(features) == chunk_size:
-                                # Process the chunk
                                 df_chunk = pd.DataFrame(features)
                                 insert_into_motherduck(df_chunk, conn, schema, table)
                                 logger.info(
                                     f"Processed features {i - chunk_size + 1} to {i}"
                                 )
 
-                                # Empty the list
                                 features = []
 
-                        # Process any remaining features outside the loop
                         if features:
                             df_chunk = pd.DataFrame(features)
                             insert_into_motherduck(df_chunk, conn, schema, table)
                             logger.info(
                                 f"Processed remaining features: {len(features)}"
                             )
-                            # Empty the list
                             features = []
 
                 except Exception as e:
@@ -206,20 +197,38 @@ def load_geopackage_open_usrns(
         errors.append(error_msg)
         raise
     finally:
-        # Print all errors + total amount of errors
         if errors:
             logger.error(f"Total errors encountered: {len(errors)}")
-            for error in errors:
-                print(error)
+            if tracker:
+                tracker.add_error(len(errors))
+                tracker.add_info("errors", errors)
     return None
 
 
-def process_data(url: str, conn, batch_size: int, schema_name: str, table_name: str):
+def process_data(
+    url: str, 
+    conn, 
+    batch_size: int, 
+    schema_name: str, 
+    table_name: str,
+    config: Optional[DataSourceConfig] = None
+):
     """
     Process the data from the url and insert it into the motherduck table.
     """
-    logger.info(
-        f"Starting data stream processing from {url} with batch size {batch_size}"
-    )
-    redirect_url = fetch_redirect_url(url)
-    load_geopackage_open_usrns(redirect_url, conn, batch_size, schema_name, table_name)
+    logger.info(f"Starting data stream processing from {url} with batch size {batch_size}")
+    
+    if config:
+        with metadata_tracker(config, conn, url) as tracker:
+            try:
+                redirect_url = fetch_redirect_url(url)
+                load_geopackage_open_usrns(
+                    redirect_url, conn, batch_size, schema_name, table_name, tracker
+                )
+                logger.success(f"USRN data processing completed successfully")
+            except Exception as e:
+                logger.error(f"Error processing USRN data: {e}")
+                raise
+    else:
+        redirect_url = fetch_redirect_url(url)
+        load_geopackage_open_usrns(redirect_url, conn, batch_size, schema_name, table_name)
