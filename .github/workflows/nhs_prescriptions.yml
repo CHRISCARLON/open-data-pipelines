@@ -28,4 +28,4 @@ jobs:
         run: uv run -m src.pipelines.nhs_prescriptions
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
-          MOTHERDB: ${{ secrets.MOTHERDB_2 }}
+          MOTHERDB_2: ${{ secrets.MOTHERDB_2 }}
