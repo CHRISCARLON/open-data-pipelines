@@ -64,14 +64,14 @@ class OsOpenUsrn(DataSourceConfig):
         Get all table names when multiple historic tables are available.
         """
 
-        return ["os_open_usrns"]
+        return ["os_open_usrns_latest"]
 
     @property
     def schema_name(self) -> str:
         """
         Get the schema name for the Street Manager data based on last month.
         """
-        return "open_usrns_latest"
+        return "os_open_usrns"
 
     @property
     def db_template(self) -> dict:
