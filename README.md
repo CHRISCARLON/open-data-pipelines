@@ -9,23 +9,26 @@ Data pipelines for working with UK open data sources.
 
 This project enables data analysts to perform analysis on UK open data by automating the extraction, loading, and transformation (ELT) of data from various government and public sector sources.
 
+Some pipelines are more advanced than others.
+
 ## Current Data Sources
 
 - **Street Manager** - Street Works data for England
 - **Ordnance Survey** - USRNs, Linked Identifiers
 - **Geoplace SWA Codes** - Street Works Authority codes
-- **NAPTAN** - Public Transport Access Nodes
+- **National Public Transport Access Nodes (NaPTAN)** - Public Transport Access Nodes
 - **BDUK Premises Data** - Project Gigabit premises
 - **Built Up Areas** - OS Built Up Areas boundaries
 - **NHS Prescribing Data** - English prescribing data
-- **Utility Company Open Data** - Underground infrastructure
+- **Cadent Gas Asset Network** - Underground infrastructure
+- **Open Bus Data BODS** - Bus and coach data
+- **Ordnance Survey** - Linked Identifiers, Unique Street Reference Numbers (USRN), Unique Property Reference Numbers (UPRN)
 
 ## Current Analyses
 
-DBT models are set up for certain analyses:
+Some DBT models are set up for more complex analysis:
 
 - **Street Works Impact Index Score** - this feeds into [Word on the Street](https://word-on-the-street.evidence.app)
-- **NAPTAN to USRNs** - this is a test of the NAPTAN data against the USRN data - can we geospatial join them??
 
 ## License
 
