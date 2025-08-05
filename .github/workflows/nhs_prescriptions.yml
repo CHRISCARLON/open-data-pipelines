@@ -1,8 +1,9 @@
-name: OS USRN UPRN
+name: NHS Prescriptions
 
 on:
-  schedule:
-    - cron: "30 1 4 * *"
+  push:
+    branches:
+      - main
 
 jobs:
   run-pipeline:
@@ -23,8 +24,8 @@ jobs:
       - name: Install the project
         run: uv sync --no-cache
 
-      - name: Run os usrn uprn pipeline
-        run: uv run -m src.pipelines.open_usrn
+      - name: Run nhs prescriptions pipeline
+        run: uv run -m src.pipelines.nhs_prescriptions
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
-          MOTHERDB: ${{ secrets.MOTHERDB }}
+          MOTHERDB: ${{ secrets.MOTHERDB_2 }}

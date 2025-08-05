@@ -54,7 +54,6 @@ def insert_into_motherduck(df, conn, schema: str, table: str):
             return None
 
         except Exception as e:
-            # Clean up registration
             try:
                 conn.unregister("df_temp")
             except Exception:
