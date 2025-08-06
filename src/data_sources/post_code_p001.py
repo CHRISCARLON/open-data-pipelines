@@ -60,7 +60,7 @@ class PostCodeP001(DataSourceConfig):
     @property
     def table_names(self) -> List[str]:
         """Get the table name for Postcode P001 data."""
-        return ["pcd_001"]
+        return ["pcd_p001"]
 
     @property
     def schema_name(self) -> str:
