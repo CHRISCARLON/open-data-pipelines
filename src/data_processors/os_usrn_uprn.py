@@ -39,13 +39,13 @@ def insert_into_motherduck(df, conn, schema: str, table: str):
             insert_sql = f"""INSERT INTO "{schema}"."{table}" SELECT * FROM temp_df"""
             conn.execute(insert_sql)
 
-            if retry_count > 0: 
+            if retry_count > 0:
                 logger.success(
                     f"Successfully inserted data on attempt {retry_count + 1}"
                 )
             return True
         except Exception as e:
-            if retry_count < max_retries - 1: 
+            if retry_count < max_retries - 1:
                 wait_time = (2**retry_count) * base_delay
                 logger.warning(f"Attempt {retry_count + 1} failed: {e}")
                 logger.info(f"Retrying in {wait_time} seconds...")

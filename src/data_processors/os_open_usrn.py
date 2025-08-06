@@ -41,7 +41,7 @@ def insert_into_motherduck(df, conn, schema: str, table: str):
             if schema == "open_usrns_latest" and table == "os_open_usrns":
                 insert_sql = """INSERT INTO open_usrns_latest.os_open_usrns SELECT * FROM df_temp"""
             else:
-                raise ValueError(f"Invalid schema or table: {schema}.{table}") 
+                raise ValueError(f"Invalid schema or table: {schema}.{table}")
 
             conn.execute(insert_sql)
 

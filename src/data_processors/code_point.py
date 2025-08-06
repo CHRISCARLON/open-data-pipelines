@@ -39,7 +39,9 @@ def insert_into_motherduck(df, conn, schema: str, table: str):
             conn.register("df_temp", df)
 
             if schema == "post_code_data" and table == "code_point":
-                insert_sql = """INSERT INTO post_code_data.code_point SELECT * FROM df_temp"""
+                insert_sql = (
+                    """INSERT INTO post_code_data.code_point SELECT * FROM df_temp"""
+                )
             else:
                 raise ValueError(f"Invalid schema or table: {schema}.{table}")
 
@@ -165,34 +167,48 @@ def load_geopackage_open_code_point(
 
                             if len(features) == chunk_size:
                                 df_chunk = pd.DataFrame(features)
-                                
+
                                 expected_columns = [
-                                    "postcode", "positional_quality_indicator", "country_code", 
-                                    "nhs_regional_ha_code", "nhs_ha_code", "admin_county_code", 
-                                    "admin_district_code", "admin_ward_code", "geometry"
+                                    "postcode",
+                                    "positional_quality_indicator",
+                                    "country_code",
+                                    "nhs_regional_ha_code",
+                                    "nhs_ha_code",
+                                    "admin_county_code",
+                                    "admin_district_code",
+                                    "admin_ward_code",
+                                    "geometry",
                                 ]
-                                
+
                                 for col in expected_columns:
                                     if col not in df_chunk.columns:
                                         df_chunk[col] = None
-                                
+
                                 df_chunk = df_chunk[expected_columns]
-                                
+
                                 string_columns = [
-                                    "postcode", "country_code", "nhs_regional_ha_code", 
-                                    "nhs_ha_code", "admin_county_code", "admin_district_code", 
-                                    "admin_ward_code", "geometry"
+                                    "postcode",
+                                    "country_code",
+                                    "nhs_regional_ha_code",
+                                    "nhs_ha_code",
+                                    "admin_county_code",
+                                    "admin_district_code",
+                                    "admin_ward_code",
+                                    "geometry",
                                 ]
-                                
+
                                 for col in string_columns:
                                     if col in df_chunk.columns:
                                         df_chunk[col] = df_chunk[col].astype(str)
-                                
+
                                 if "positional_quality_indicator" in df_chunk.columns:
-                                    df_chunk["positional_quality_indicator"] = pd.to_numeric(
-                                        df_chunk["positional_quality_indicator"], errors='coerce'
+                                    df_chunk["positional_quality_indicator"] = (
+                                        pd.to_numeric(
+                                            df_chunk["positional_quality_indicator"],
+                                            errors="coerce",
+                                        )
                                     )
-                                
+
                                 insert_into_motherduck(df_chunk, conn, schema, table)
                                 logger.info(
                                     f"Processed features {i - chunk_size + 1} to {i}"
@@ -201,34 +217,48 @@ def load_geopackage_open_code_point(
 
                         if features:
                             df_chunk = pd.DataFrame(features)
-                            
+
                             expected_columns = [
-                                "postcode", "positional_quality_indicator", "country_code", 
-                                "nhs_regional_ha_code", "nhs_ha_code", "admin_county_code", 
-                                "admin_district_code", "admin_ward_code", "geometry"
+                                "postcode",
+                                "positional_quality_indicator",
+                                "country_code",
+                                "nhs_regional_ha_code",
+                                "nhs_ha_code",
+                                "admin_county_code",
+                                "admin_district_code",
+                                "admin_ward_code",
+                                "geometry",
                             ]
-                            
+
                             for col in expected_columns:
                                 if col not in df_chunk.columns:
                                     df_chunk[col] = None
-                            
+
                             df_chunk = df_chunk[expected_columns]
-                            
+
                             string_columns = [
-                                "postcode", "country_code", "nhs_regional_ha_code", 
-                                "nhs_ha_code", "admin_county_code", "admin_district_code", 
-                                "admin_ward_code", "geometry"
+                                "postcode",
+                                "country_code",
+                                "nhs_regional_ha_code",
+                                "nhs_ha_code",
+                                "admin_county_code",
+                                "admin_district_code",
+                                "admin_ward_code",
+                                "geometry",
                             ]
-                            
+
                             for col in string_columns:
                                 if col in df_chunk.columns:
                                     df_chunk[col] = df_chunk[col].astype(str)
-                            
+
                             if "positional_quality_indicator" in df_chunk.columns:
-                                df_chunk["positional_quality_indicator"] = pd.to_numeric(
-                                    df_chunk["positional_quality_indicator"], errors='coerce'
+                                df_chunk["positional_quality_indicator"] = (
+                                    pd.to_numeric(
+                                        df_chunk["positional_quality_indicator"],
+                                        errors="coerce",
+                                    )
                                 )
-                            
+
                             insert_into_motherduck(df_chunk, conn, schema, table)
                             logger.info(
                                 f"Processed remaining features: {len(features)}"

@@ -81,7 +81,7 @@ class CodePoint(DataSourceConfig):
             "admin_county_code": "VARCHAR",
             "admin_district_code": "VARCHAR",
             "admin_ward_code": "VARCHAR",
-            "geometry": "VARCHAR"
+            "geometry": "VARCHAR",
         }
 
     @property
