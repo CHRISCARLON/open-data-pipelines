@@ -165,27 +165,47 @@ def load_geopackage_open_code_point(
 
                             if len(features) == chunk_size:
                                 df_chunk = pd.DataFrame(features)
+                                
+                                expected_columns = [
+                                    "postcode", "positional_quality_indicator", "country_code", 
+                                    "nhs_regional_ha_code", "nhs_ha_code", "admin_county_code", 
+                                    "admin_district_code", "admin_ward_code", "geometry"
+                                ]
+                                
+                                for col in expected_columns:
+                                    if col not in df_chunk.columns:
+                                        df_chunk[col] = None
+                                
+                                df_chunk = df_chunk[expected_columns]
+                                
+                                string_columns = [
+                                    "postcode", "country_code", "nhs_regional_ha_code", 
+                                    "nhs_ha_code", "admin_county_code", "admin_district_code", 
+                                    "admin_ward_code", "geometry"
+                                ]
+                                
+                                for col in string_columns:
+                                    if col in df_chunk.columns:
+                                        df_chunk[col] = df_chunk[col].astype(str)
+                                
+                                if "positional_quality_indicator" in df_chunk.columns:
+                                    df_chunk["positional_quality_indicator"] = pd.to_numeric(
+                                        df_chunk["positional_quality_indicator"], errors='coerce'
+                                    )
+                                
                                 insert_into_motherduck(df_chunk, conn, schema, table)
                                 logger.info(
                                     f"Processed features {i - chunk_size + 1} to {i}"
                                 )
-
                                 features = []
 
                         if features:
                             df_chunk = pd.DataFrame(features)
                             
-
                             expected_columns = [
-                                "postcode", 
-                                "positional_quality_indicator", 
-                                "country_code", 
-                                "nhs_regional_ha_code", 
-                                "nhs_ha_code", 
-                                "admin_county_code", 
-                                "admin_district_code", 
-                                "admin_ward_code", 
-                                "geometry"
+                                "postcode", "positional_quality_indicator", "country_code", 
+                                "nhs_regional_ha_code", "nhs_ha_code", "admin_county_code", 
+                                "admin_district_code", "admin_ward_code", "geometry"
                             ]
                             
                             for col in expected_columns:
@@ -194,8 +214,20 @@ def load_geopackage_open_code_point(
                             
                             df_chunk = df_chunk[expected_columns]
                             
-                            for col in expected_columns:
-                                df_chunk[col] = df_chunk[col].astype(str)
+                            string_columns = [
+                                "postcode", "country_code", "nhs_regional_ha_code", 
+                                "nhs_ha_code", "admin_county_code", "admin_district_code", 
+                                "admin_ward_code", "geometry"
+                            ]
+                            
+                            for col in string_columns:
+                                if col in df_chunk.columns:
+                                    df_chunk[col] = df_chunk[col].astype(str)
+                            
+                            if "positional_quality_indicator" in df_chunk.columns:
+                                df_chunk["positional_quality_indicator"] = pd.to_numeric(
+                                    df_chunk["positional_quality_indicator"], errors='coerce'
+                                )
                             
                             insert_into_motherduck(df_chunk, conn, schema, table)
                             logger.info(
