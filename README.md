@@ -22,8 +22,8 @@ Some pipelines are more advanced than others.
 - **Cadent Gas Asset Network** - Underground infrastructure
 - **Open Bus Data BODS** - Bus and coach timetable data in GTFS format
 - **Ordnance Survey** - Linked Identifiers, Unique Street Reference Numbers (USRN), Unique Property Reference Numbers (UPRN), Code Point Open Data
-- **Postcode P001** - P001: Number of usual residents by postcode by sex
-- **Postcode P002** - P002: Number of households by postcode
+- **Census 2021 Postcode P001** - P001: Number of usual residents by postcode by sex
+- **Census 2021 Postcode P002** - P002: Number of households by postcode
 
 ## Current Analyses
 
