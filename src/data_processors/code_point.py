@@ -38,10 +38,10 @@ def insert_into_motherduck(df, conn, schema: str, table: str):
 
             conn.register("df_temp", df)
 
-            if schema == "open_usrns_latest" and table == "os_open_usrns":
-                insert_sql = """INSERT INTO open_usrns_latest.os_open_usrns SELECT * FROM df_temp"""
+            if schema == "post_code_data" and table == "code_point":
+                insert_sql = """INSERT INTO post_code_data.code_point SELECT * FROM df_temp"""
             else:
-                raise ValueError(f"Invalid schema or table: {schema}.{table}") 
+                raise ValueError(f"Invalid schema or table: {schema}.{table}")
 
             conn.execute(insert_sql)
 
@@ -85,11 +85,11 @@ def fetch_redirect_url(url: str) -> str:
     return redirect_url
 
 
-def load_geopackage_open_usrns(
+def load_geopackage_open_code_point(
     url: str, conn, batch_size: int, schema: str, table: str, tracker=None
 ):
     """
-    Function to load OS open usrn data in batches of 50,000 rows.
+    Function to load code point data in batches of 50,000 rows.
 
     It taskes a duckdb connection object and the download url required.
 
@@ -221,15 +221,15 @@ def process_data(
         with metadata_tracker(config, conn, url) as tracker:
             try:
                 redirect_url = fetch_redirect_url(url)
-                load_geopackage_open_usrns(
+                load_geopackage_open_code_point(
                     redirect_url, conn, batch_size, schema_name, table_name, tracker
                 )
-                logger.success("USRN data processing completed successfully")
+                logger.success("Code Point data processing completed successfully")
             except Exception as e:
-                logger.error(f"Error processing USRN data: {e}")
+                logger.error(f"Error processing Code Point data: {e}")
                 raise
     else:
         redirect_url = fetch_redirect_url(url)
-        load_geopackage_open_usrns(
+        load_geopackage_open_code_point(
             redirect_url, conn, batch_size, schema_name, table_name
         )

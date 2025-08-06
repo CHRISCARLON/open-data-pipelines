@@ -8,9 +8,9 @@ from .data_source_config import (
 )
 
 
-class OsOpenUsrn(DataSourceConfig):
+class CodePoint(DataSourceConfig):
     """
-    Configuration class for OS Open USRN data source.
+    Configuration class for Code Point data source.
     Implements the DataSourceConfigProtocol.
     """
 
@@ -21,7 +21,7 @@ class OsOpenUsrn(DataSourceConfig):
         batch_limit: Optional[int] = None,
     ):
         """
-        Initialise a OS Open USRN configuration.
+        Initialise a Street Manager configuration.
 
         Args:
             processor_type: The type of data processor to use
@@ -31,7 +31,7 @@ class OsOpenUsrn(DataSourceConfig):
         self._processor_type = processor_type
         self._time_range = time_range
         self.batch_limit = batch_limit
-        self._source_type = DataSourceType.OS_OPEN_USRN
+        self._source_type = DataSourceType.CODE_POINT
 
     @property
     def processor_type(self) -> DataProcessorType:
@@ -61,21 +61,27 @@ class OsOpenUsrn(DataSourceConfig):
         Get all table names when multiple historic tables are available.
         """
 
-        return ["open_usrns_latest"]
+        return ["post_code_data"]
 
     @property
     def schema_name(self) -> str:
         """
-        Get the schema name for the Street Manager data based on last month.
+        Get the schema name for the Code Point data based on last month.
         """
-        return "os_open_usrns"
+        return "code_point"
 
     @property
     def db_template(self) -> dict:
         return {
-            "geometry": "VARCHAR",
-            "street_type": "VARCHAR",
-            "usrn": "BIGINT",
+            "postcode": "VARCHAR",
+            "positional_quality_indicator": "INTEGER",
+            "country_code": "VARCHAR",
+            "nhs_regional_ha_code": "VARCHAR",
+            "nhs_ha_code": "VARCHAR",
+            "admin_county_code": "VARCHAR",
+            "admin_district_code": "VARCHAR",
+            "admin_ward_code": "VARCHAR",
+            "geometry": "GEOMETRY"
         }
 
     @property
@@ -132,7 +138,7 @@ class OsOpenUsrn(DataSourceConfig):
             links_str += f", ... ({len(self.download_links)} total)"
 
         return (
-            f"OsOpenUsrnConfig(processor={self.processor_type.value}, "
+            f"CodePointConfig(processor={self.processor_type.value}, "
             f"source={self.source_type.code}, "
             f"base_url={self.base_url}, "
             f"time_range={self.time_range.value}, "
@@ -144,8 +150,8 @@ class OsOpenUsrn(DataSourceConfig):
         )
 
     @classmethod
-    def create_default_latest(cls) -> "OsOpenUsrn":
-        """Create a default OS Open USRN configuration."""
+    def create_default_latest(cls) -> "CodePoint":
+        """Create a default Code Point configuration."""
         return cls(
             processor_type=DataProcessorType.MOTHERDUCK,
             time_range=TimeRange.LATEST,
@@ -154,5 +160,5 @@ class OsOpenUsrn(DataSourceConfig):
 
 
 if __name__ == "__main__":
-    config = OsOpenUsrn.create_default_latest()
+    config = CodePoint.create_default_latest()
     print(config.schema_name)

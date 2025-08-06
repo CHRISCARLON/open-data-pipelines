@@ -207,6 +207,24 @@ class BODSTimetables(DataSourceConfig):
                 "additional_info": "TEXT",
                 "created_at": "TIMESTAMP",
             }
+        
+    def __str__(self) -> str:
+        """String representation of the configuration."""
+        links_str = ", ".join(self.download_links[:2])
+        if len(self.download_links) > 2:
+            links_str += f", ... ({len(self.download_links)} total)"
+
+        return (
+            f"BODSTimetablesConfig(processor={self.processor_type.value}, "
+            f"source={self.source_type.code}, "
+            f"base_url={self.base_url}, "
+            f"time_range={self.time_range.value}, "
+            f"batch_limit={self.batch_limit}, "
+            f"download_links=[{links_str}]), "
+            f"schema_name={self.schema_name}, "
+            f"table_names={self.table_names}, "
+            f"db_template={self.db_template}"
+        )
 
     @classmethod
     def create_default_latest(cls) -> "BODSTimetables":
@@ -215,7 +233,6 @@ class BODSTimetables(DataSourceConfig):
             time_range=TimeRange.LATEST,
             batch_limit=300000,
         )
-
 
 if __name__ == "__main__":
     config = BODSTimetables.create_default_latest()

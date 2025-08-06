@@ -11,7 +11,7 @@ from datetime import timedelta
 
 class OsUsrnUprn(DataSourceConfig):
     """
-    Configuration class for Street Manager data source.
+    Configuration class for OS USRN UPRN data source.
     Implements the DataSourceConfigProtocol.
     """
 
@@ -22,15 +22,12 @@ class OsUsrnUprn(DataSourceConfig):
         batch_limit: Optional[int] = None,
     ):
         """
-        Initialise a Street Manager configuration.
+        Initialise a OS USRN UPRN configuration.
 
         Args:
             processor_type: The type of data processor to use
             time_range: The time range for the data
             batch_limit: Optional limit for batch processing
-            year: Specific year for historic data (defaults to previous year)
-            start_month: Starting month for historic data (1-12, defaults to 1)
-            end_month: Ending month for historic data (non-inclusive, 1-13, defaults to 13)
         """
         self._processor_type = processor_type
         self._time_range = time_range
@@ -158,7 +155,7 @@ class OsUsrnUprn(DataSourceConfig):
             links_str += f", ... ({len(self.download_links)} total)"
 
         return (
-            f"StreetManagerConfig(processor={self.processor_type.value}, "
+            f"OsUsrnUprnConfig(processor={self.processor_type.value}, "
             f"source={self.source_type.code}, "
             f"base_url={self.base_url}, "
             f"time_range={self.time_range.value}, "
@@ -171,7 +168,7 @@ class OsUsrnUprn(DataSourceConfig):
 
     @classmethod
     def create_default_latest(cls) -> "OsUsrnUprn":
-        """Create a default OS Open USRN configuration."""
+        """Create a default OS USRN UPRN configuration."""
         return cls(
             processor_type=DataProcessorType.MOTHERDUCK,
             time_range=TimeRange.LATEST,

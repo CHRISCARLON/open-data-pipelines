@@ -60,6 +60,10 @@ class DataSourceType(Enum):
         "bods_timetables",
         "https://data.bus-data.dft.gov.uk/timetable/download/gtfs-file/london/",
     )
+    CODE_POINT = (
+        "code_point",
+        "https://api.os.uk/downloads/v1/products/CodePointOpen/downloads?area=GB&format=GeoPackage&redirect",
+    )
     # Add other data sources as needed
 
     def __init__(self, code: str, base_url: str):

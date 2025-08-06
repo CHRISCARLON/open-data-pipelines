@@ -34,20 +34,18 @@ def insert_into_motherduck(df, conn, schema: str, table: str):
     def attempt_insert(retry_count):
         """Closure for handling a single insert attempt with logging"""
         try:
-            # Register the DataFrame with the connection
             conn.register("temp_df", df)
 
-            # Now use the registered name in the SQL
             insert_sql = f"""INSERT INTO "{schema}"."{table}" SELECT * FROM temp_df"""
             conn.execute(insert_sql)
 
-            if retry_count > 0:  # Log if it succeeded after retries
+            if retry_count > 0: 
                 logger.success(
                     f"Successfully inserted data on attempt {retry_count + 1}"
                 )
             return True
         except Exception as e:
-            if retry_count < max_retries - 1:  # Don't wait on the last attempt
+            if retry_count < max_retries - 1: 
                 wait_time = (2**retry_count) * base_delay
                 logger.warning(f"Attempt {retry_count + 1} failed: {e}")
                 logger.info(f"Retrying in {wait_time} seconds...")
@@ -57,7 +55,6 @@ def insert_into_motherduck(df, conn, schema: str, table: str):
                 logger.error(f"All {max_retries} attempts failed. Final error: {e}")
                 raise
 
-    # Execute attempts using the closure
     for attempt in range(max_retries):
         if attempt_insert(attempt):
             return True
