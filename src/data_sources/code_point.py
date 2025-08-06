@@ -61,14 +61,14 @@ class CodePoint(DataSourceConfig):
         Get all table names when multiple historic tables are available.
         """
 
-        return ["post_code_data"]
+        return ["code_point"]
 
     @property
     def schema_name(self) -> str:
         """
         Get the schema name for the Code Point data based on last month.
         """
-        return "code_point"
+        return "post_code_data"
 
     @property
     def db_template(self) -> dict:
