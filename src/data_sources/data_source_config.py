@@ -64,6 +64,14 @@ class DataSourceType(Enum):
         "code_point",
         "https://api.os.uk/downloads/v1/products/CodePointOpen/downloads?area=GB&format=GeoPackage&redirect",
     )
+    POSTCODE_p001 = (
+        "postcode_p001",
+        "https://www.nomisweb.co.uk/output/census/2021/pcd_p001.csv",
+    )
+    POSTCODE_p002 = (
+        "postcode_p002",
+        "https://www.nomisweb.co.uk/output/census/2021/pcd_p002.csv",
+    )
     # Add other data sources as needed
 
     def __init__(self, code: str, base_url: str):
