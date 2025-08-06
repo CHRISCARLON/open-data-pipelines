@@ -92,21 +92,16 @@ def validate_column_names(
 def clean_dataframe_for_motherduck(
     df: pd.DataFrame, expected_columns: Dict[str, str]
 ) -> pd.DataFrame:
-    """
-    Clean DataFrame to handle data type issues for MotherDuck insertion.
-
-    Args:
-        df: DataFrame to clean
-        expected_columns: Dict of column names and their expected types
-
-    Returns:
-        Cleaned DataFrame
-    """
-    # TODO: This is a hack to get the data into MotherDuck.
-    # We need to find a better way to do this.
+    """Clean DataFrame and rename columns to SQL-safe names."""
     df_clean = df.copy()
-
-    # Define numeric columns that need special handling
+    
+    column_mapping = {
+        "Sex (2 categories) Code": "Sex_Code",
+        "Sex (2 categories) Label": "Sex_Label",
+    }
+    
+    df_clean = df_clean.rename(columns=column_mapping)
+    
     numeric_columns = {
         col: dtype
         for col, dtype in expected_columns.items()

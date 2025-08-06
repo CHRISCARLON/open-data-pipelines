@@ -70,14 +70,14 @@ class PostCodeP001(DataSourceConfig):
     @property
     def db_template(self) -> dict:
         """
-        Database template for NHS English Prescribing data.
-        Based on the expected CSV structure.
+        Database template for Postcode P001 data.
+        Uses SQL-safe column names.
         """
         return {
-            "postcode": "VARCHAR",
-            "Sex (2 categories) Code": "BIGINT",
-            "Sex (2 categories) Label": "VARCHAR",
-            "Count": "BIGINT",
+            "Postcode": "VARCHAR",
+            "Sex_Code": "BIGINT",
+            "Sex_Label": "VARCHAR", 
+            "Count": "BIGINT"
         }
 
     @property
