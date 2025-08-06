@@ -30,7 +30,7 @@ class PostCodeP001(DataSourceConfig):
         self._processor_type = processor_type
         self._time_range = time_range
         self.batch_limit = batch_limit
-        self._source_type = DataSourceType.NHS_ENGLISH_PRESCRIBING_DATA
+        self._source_type = DataSourceType.POSTCODE_p001
 
     @property
     def processor_type(self) -> DataProcessorType:
