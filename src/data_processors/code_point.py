@@ -194,8 +194,7 @@ def load_geopackage_open_code_point(
                             
                             df_chunk = df_chunk[expected_columns]
                             
-                            string_columns = [col for col in expected_columns if col != "positional_quality_indicator"]
-                            for col in string_columns:
+                            for col in expected_columns:
                                 df_chunk[col] = df_chunk[col].astype(str)
                             
                             insert_into_motherduck(df_chunk, conn, schema, table)

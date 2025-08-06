@@ -74,7 +74,7 @@ class CodePoint(DataSourceConfig):
     def db_template(self) -> dict:
         return {
             "postcode": "VARCHAR",
-            "positional_quality_indicator": "INTEGER",
+            "positional_quality_indicator": "VARCHAR",
             "country_code": "VARCHAR",
             "nhs_regional_ha_code": "VARCHAR",
             "nhs_ha_code": "VARCHAR",
