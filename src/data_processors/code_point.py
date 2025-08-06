@@ -174,6 +174,30 @@ def load_geopackage_open_code_point(
 
                         if features:
                             df_chunk = pd.DataFrame(features)
+                            
+
+                            expected_columns = [
+                                "postcode", 
+                                "positional_quality_indicator", 
+                                "country_code", 
+                                "nhs_regional_ha_code", 
+                                "nhs_ha_code", 
+                                "admin_county_code", 
+                                "admin_district_code", 
+                                "admin_ward_code", 
+                                "geometry"
+                            ]
+                            
+                            for col in expected_columns:
+                                if col not in df_chunk.columns:
+                                    df_chunk[col] = None
+                            
+                            df_chunk = df_chunk[expected_columns]
+                            
+                            string_columns = [col for col in expected_columns if col != "positional_quality_indicator"]
+                            for col in string_columns:
+                                df_chunk[col] = df_chunk[col].astype(str)
+                            
                             insert_into_motherduck(df_chunk, conn, schema, table)
                             logger.info(
                                 f"Processed remaining features: {len(features)}"
