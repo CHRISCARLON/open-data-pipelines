@@ -120,9 +120,11 @@ def load_geopackage_open_usrns(
 
             # Find the GeoPackage file
             gpkg_file = None
-            for file_name in os.listdir(temp_dir):
-                if file_name.endswith(".gpkg"):
-                    gpkg_file = os.path.join(temp_dir, file_name)
+            for root, dirs, files in os.walk(temp_dir):
+                logger.info(f"Root: {dirs}")
+                for file_name in files:
+                    if file_name.endswith(".gpkg"):
+                        gpkg_file = os.path.join(root, file_name)
                     logger.success(f"The GeoPackage file is: {gpkg_file}")
                     break
 
