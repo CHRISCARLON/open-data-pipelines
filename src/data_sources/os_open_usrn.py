@@ -64,7 +64,7 @@ class OsOpenUsrn(DataSourceConfig):
         Get all table names when multiple historic tables are available.
         """
 
-        return ["os_open_usrns_latest"]
+        return ["open_usrns_latest"]
 
     @property
     def schema_name(self) -> str:

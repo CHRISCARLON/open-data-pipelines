@@ -1,9 +1,8 @@
 name: NHS Prescriptions
 
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: "30 15 25 * *"
 
 jobs:
   run-pipeline:
