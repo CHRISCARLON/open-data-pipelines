@@ -24,6 +24,7 @@ Some pipelines are more advanced than others.
 - **Ordnance Survey** - Linked Identifiers, Unique Street Reference Numbers (USRN), Unique Property Reference Numbers (UPRN), Code Point Open Data
 - **Census 2021 Postcode P001** - P001: Number of usual residents by postcode by sex
 - **Census 2021 Postcode P002** - P002: Number of households by postcode
+- **National Statistics Postcode Lookup** - The NSPL relates both current and terminated postcodes to a range of current statutory geographies via ‘best-fit’ allocation from the 2021 Census Output Areas (national parks and Workplace Zones are exempt from ‘best-fit’ and use ‘exact-fit’ allocations) for England, Wales, Scotland and Northern Ireland.
 
 ## Current Analyses
 
