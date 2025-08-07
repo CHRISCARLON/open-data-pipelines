@@ -72,6 +72,10 @@ class DataSourceType(Enum):
         "postcode_p002",
         "https://www.nomisweb.co.uk/output/census/2021/pcd_p002.csv",
     )
+    NATIONAL_STATISTIC_POSTCODE_LOOKUP = (
+        "national_statistic_postcode_lookup",
+        "https://www.arcgis.com/sharing/rest/content/items/077631e063eb4e1ab43575d01381ec33/data",
+    )
     # Add other data sources as needed
 
     def __init__(self, code: str, base_url: str):
