@@ -94,14 +94,14 @@ def clean_dataframe_for_motherduck(
 ) -> pd.DataFrame:
     """Clean DataFrame and rename columns to SQL-safe names."""
     df_clean = df.copy()
-    
+
     column_mapping = {
         "Sex (2 categories) Code": "Sex_Code",
         "Sex (2 categories) Label": "Sex_Label",
     }
-    
+
     df_clean = df_clean.rename(columns=column_mapping)
-    
+
     numeric_columns = {
         col: dtype
         for col, dtype in expected_columns.items()

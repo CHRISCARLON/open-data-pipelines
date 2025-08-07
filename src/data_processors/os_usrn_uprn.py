@@ -12,7 +12,8 @@ from ..data_sources.data_source_config import DataProcessorType, DataSourceConfi
 from ..data_processors.utils.metadata_logger import metadata_tracker
 from ..data_processors.utils.data_processor_utils import insert_table
 
-#TODO: This needs to stream the data in chunks and process it in batches rather than downloading the whole zip file into a temp dir
+# TODO: This needs to stream the data in chunks and process it in batches rather than downloading the whole zip file into a temp dir
+
 
 def insert_into_motherduck(df, conn, schema: str, table: str):
     """

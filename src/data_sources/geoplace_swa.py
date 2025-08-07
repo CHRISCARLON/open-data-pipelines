@@ -36,7 +36,7 @@ class GeoplaceSwa(DataSourceConfig):
         self._time_range = time_range
         self.batch_limit = batch_limit
         self._source_type = DataSourceType.GEOPLACE_SWA
-        self._cached_download_links = None 
+        self._cached_download_links = None
 
     @property
     def processor_type(self) -> DataProcessorType:

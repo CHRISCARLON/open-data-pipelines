@@ -27,7 +27,6 @@ def clean_dataframe_for_motherduck(
 
     for col, dtype in numeric_columns.items():
         if col in df_clean.columns:
-
             df_clean[col] = df_clean[col].replace(["", "nan", "NaN", "null"], None)
 
             if dtype == "BIGINT":
@@ -53,8 +52,8 @@ def fetch_redirect_url(url: str) -> str:
         response = requests.get(url)
         response.raise_for_status()
         redirect_url = response.url
-    except (requests.exceptions.RequestException, ValueError, Exception) as e:
-        logger.error(f"An error retrieving the redirect URL")
+    except (requests.exceptions.RequestException, ValueError, Exception):
+        logger.error("An error retrieving the redirect URL")
         raise
     return redirect_url
 
@@ -327,7 +326,13 @@ def process_data(
             try:
                 expected_columns = config.db_template if config else None
                 total_rows, file_size, fieldnames_count = load_csv_data(
-                    url, conn, batch_limit, schema_name, table_name, proc_type, expected_columns
+                    url,
+                    conn,
+                    batch_limit,
+                    schema_name,
+                    table_name,
+                    proc_type,
+                    expected_columns,
                 )
 
                 tracker.set_rows_processed(total_rows)
@@ -343,7 +348,9 @@ def process_data(
     else:
         logger.warning("No config provided - metadata logging disabled")
         try:
-            total_rows, file_size, fieldnames_count = load_csv_data(url, conn, batch_limit, schema_name, table_name, proc_type, None)
+            total_rows, file_size, fieldnames_count = load_csv_data(
+                url, conn, batch_limit, schema_name, table_name, proc_type, None
+            )
             logger.success(f"Data inserted into {schema_name}.{table_name}")
         except Exception as e:
             logger.error(f"Error processing data: {e}")

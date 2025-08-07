@@ -76,8 +76,8 @@ class PostCodeP001(DataSourceConfig):
         return {
             "Postcode": "VARCHAR",
             "Sex_Code": "BIGINT",
-            "Sex_Label": "VARCHAR", 
-            "Count": "BIGINT"
+            "Sex_Label": "VARCHAR",
+            "Count": "BIGINT",
         }
 
     @property

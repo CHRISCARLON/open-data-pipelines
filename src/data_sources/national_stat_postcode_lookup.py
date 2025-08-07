@@ -48,7 +48,7 @@ class NationalStatisticPostcodeLookup(DataSourceConfig):
     def base_url(self) -> str:
         """Get the base URL for the configured data source."""
         return self.source_type.base_url
-    
+
     @property
     def download_links(self) -> list[str]:
         """
@@ -107,7 +107,7 @@ class NationalStatisticPostcodeLookup(DataSourceConfig):
             "lep2": "VARCHAR",
             "pfa": "VARCHAR",
             "imd": "BIGINT",
-            "icb": "VARCHAR"
+            "icb": "VARCHAR",
         }
 
     @property

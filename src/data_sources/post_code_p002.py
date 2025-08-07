@@ -73,10 +73,7 @@ class PostCodeP002(DataSourceConfig):
         Database template for Postcode P002 data.
         Uses SQL-safe column names.
         """
-        return {
-            "Postcode": "VARCHAR",
-            "Count": "BIGINT"
-        }
+        return {"Postcode": "VARCHAR", "Count": "BIGINT"}
 
     @property
     def metadata_schema_name(self) -> str:
