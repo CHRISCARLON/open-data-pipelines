@@ -6,9 +6,25 @@
     pre_hook="INSTALL spatial; LOAD spatial;"
 ) }}
 
-SELECT DISTINCT ON (permit_reference_number)
+WITH promoter_totals AS (
+  SELECT 
+    promoter_organisation,
+    promoter_swa_code,
+    COUNT(DISTINCT permit_reference_number) as total_permits,
+    COUNT(DISTINCT CASE 
+      WHEN work_status_ref = 'completed' 
+        AND event_type = 'WORK_STOP' 
+        AND work_category_ref IN ('immediate_urgent', 'immediate_emergency')
+      THEN permit_reference_number 
+    END) as emergency_permits
+  FROM {{ current_schema }}.{{ current_table }}
+  GROUP BY promoter_organisation, promoter_swa_code
+),
+emergency_works AS (
+  SELECT DISTINCT ON (permit_reference_number)
   permit_reference_number,
   promoter_organisation,
+  promoter_swa_code,
   highway_authority,
   street_name,
   activity_type,
@@ -53,3 +69,13 @@ WHERE work_status_ref = 'completed'
   AND actual_end_date_time IS NOT NULL
   AND works_location_coordinates IS NOT NULL
 ORDER BY permit_reference_number, actual_start_date_time
+)
+SELECT 
+  ew.*,
+  pt.total_permits as promoter_total_permits,
+  pt.emergency_permits as promoter_emergency_permits,
+  ROUND(100.0 * pt.emergency_permits / NULLIF(pt.total_permits, 0), 2) as emergency_percentage
+FROM emergency_works ew
+LEFT JOIN promoter_totals pt 
+  ON ew.promoter_organisation = pt.promoter_organisation 
+  AND ew.promoter_swa_code = pt.promoter_swa_code
