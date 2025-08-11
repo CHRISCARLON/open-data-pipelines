@@ -54,10 +54,8 @@ models:
       usrn_permit_details_london:
     collab_overview:
       collab_overview_england:
-      collab_overview_england_2024:
     emergency_works:
       emergency_works_overview_england:
-      emergency_works_overview_england_2024:
       stg_works_by_authority:
       int_postcodes:
       int_works_postcodes_by_authority:
@@ -65,4 +63,3 @@ models:
       clean_up:
     new_connections:
       new_connections_england:
-      new_connections_2024:

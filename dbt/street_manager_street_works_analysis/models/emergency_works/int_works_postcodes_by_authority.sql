@@ -21,24 +21,24 @@ UNION ALL
       w.actual_start_date_time,
       w.actual_end_date_time,
       w.highway_authority,
-      cp.Postcode,
-      cp.PQI,
-      cp.Easting as postcode_easting,
-      cp.Northing as postcode_northing,
-      cp.Country_code,
-      cp.NHS_regional_code,
-      cp.NHS_health_code,
-      cp.Admin_county_code,
-      cp.Admin_district_code,
-      cp.Admin_ward_code,
+      cp.postcode,
+      cp.positional_quality_indicator,
+      ST_X(ST_GeomFromText(cp.postcode_point)) as postcode_easting,
+      ST_Y(ST_GeomFromText(cp.postcode_point)) as postcode_northing,
+      cp.country_code,
+      cp.nhs_regional_ha_code,
+      cp.nhs_ha_code,
+      cp.admin_county_code,
+      cp.admin_district_code,
+      cp.admin_ward_code,
       cp.total_population,
       cp.female_population,
       cp.male_population,
       cp.total_households,
-      ST_Distance(w.work_point, cp.postcode_point) as distance_m
+      ST_Distance(w.work_point, ST_GeomFromText(cp.postcode_point)) as distance_m
     FROM {{ ref('stg_works_by_authority') }} w
     LEFT JOIN {{ ref('int_postcodes') }} cp
-      ON ST_Contains(w.work_buffer_500m, cp.postcode_point)
+      ON ST_Contains(w.work_buffer_500m, ST_GeomFromText(cp.postcode_point))
     WHERE w.highway_authority = '{{ authority }}'
   )
 {% endfor %}

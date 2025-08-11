@@ -1,4 +1,4 @@
-{%- set archive_date = modules.datetime.datetime.strptime(var('year') + var('month'), '%Y%m') -%}
+{%- set archive_date = (run_started_at - modules.datetime.timedelta(days=63)) -%}
 {%- set table_alias = 'london_impact_scores_' ~ archive_date.strftime('%m_%Y') -%}
 
 {{ config(
