@@ -1,9 +1,14 @@
 # Open Data Pipelines!
 
-Data pipelines for working with UK open data sources.
+Simple data pipelines for working with UK open data sources.
+
+This project mainly uses MotherDuck as its data warehouse but it is configured to run with Postgres as well.
 
 > [!NOTE]
 > Currently switching most of the data pipelines from AWS to run in Github Actions - this is a work in progress but massively reduces complexity and cost.
+
+> [!NOTE]
+> Currently looking to implement DLT into this project - some pipelines will start use refernce DLT methods as a result.
 
 ## Purpose
 
@@ -13,7 +18,7 @@ Some pipelines are more advanced than others.
 
 ## Current Data Sources
 
-- **Street Manager** - Street Works data for England
+- **Street Manager** - Permit data and Section 58 data for England
 - **Geoplace SWA Codes** - Street Works Authority codes
 - **National Public Transport Access Nodes (NaPTAN)** - Public Transport Access Nodes
 - **BDUK Premises Data** - Project Gigabit premises

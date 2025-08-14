@@ -24,6 +24,10 @@ class DataSourceType(Enum):
         "street_manager",
         "https://opendata.manage-roadworks.service.gov.uk/permit/",
     )
+    SECTION_58 = (
+        "section_58",
+        "https://opendata.manage-roadworks.service.gov.uk/section_58/",
+    )
     GEOPLACE_SWA = (
         "geoplace_swa",
         "https://www.geoplace.co.uk/local-authority-resources/street-works-managers/view-swa-codes",
