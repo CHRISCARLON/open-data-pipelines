@@ -155,4 +155,4 @@ class OsOpenUsrn(DataSourceConfig):
 
 if __name__ == "__main__":
     config = OsOpenUsrn.create_default_latest()
-    print(config.schema_name)
+    print(config)

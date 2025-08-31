@@ -7,14 +7,54 @@ import zipfile
 import csv
 import pandas as pd
 from tqdm import tqdm
-from typing import Optional
+from typing import Optional, Dict
 from ..data_sources.data_source_config import DataProcessorType, DataSourceConfig
 from ..data_processors.utils.metadata_logger import metadata_tracker
 from ..data_processors.utils.data_processor_utils import insert_table
 
-# TODO: This needs to stream the data in chunks and process it in batches rather than downloading the whole zip file into a temp dir
-# Basically we need to follow the same pattern that the bduk premises data uses... you never read anything fully into memory
 
+def clean_dataframe_for_motherduck(
+    df: pd.DataFrame, expected_columns: Dict[str, str]
+) -> pd.DataFrame:
+    """Clean DataFrame and handle empty strings for numeric columns."""
+    df_clean = df.copy()
+
+    numeric_columns = {
+        col: dtype
+        for col, dtype in expected_columns.items()
+        if dtype in ["BIGINT", "DOUBLE", "INTEGER"]
+    }
+
+    for col, dtype in numeric_columns.items():
+        if col in df_clean.columns:
+            df_clean[col] = df_clean[col].replace(["", "nan", "NaN", "null"], None)
+
+            if dtype == "BIGINT":
+                numeric_series = pd.to_numeric(df_clean[col], errors="coerce")
+                df_clean[col] = pd.Series(numeric_series).astype("Int64")
+            elif dtype == "DOUBLE":
+                df_clean[col] = pd.to_numeric(df_clean[col], errors="coerce")
+
+    string_columns = [col for col in df_clean.columns if col not in numeric_columns]
+    for col in string_columns:
+        df_clean[col] = df_clean[col].astype(str).replace(["nan", "NaN", "null"], None)
+
+    return df_clean
+
+
+def fetch_redirect_url(url: str) -> str:
+    """
+    Call the redirect url and then fetch the actual download url.
+    This is suboptimal and will change in future versions.
+    """
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        redirect_url = response.url
+    except (requests.exceptions.RequestException, ValueError, Exception):
+        logger.error("An error retrieving the redirect URL")
+        raise
+    return redirect_url
 
 
 def insert_into_motherduck(df, conn, schema: str, table: str):
@@ -73,6 +113,7 @@ def load_csv_data(
     schema: str,
     name: str,
     processor_type: DataProcessorType,
+    expected_columns: Optional[Dict[str, str]] = None,
 ):
     """
     Function to stream and process CSV data in batches.
@@ -84,17 +125,13 @@ def load_csv_data(
         schema (str): Database schema
         name (str): Table name
         processor_type: Type of database processor
+        expected_columns: Optional dict of expected column names and types
     """
-    fieldnames = [
-        "CORRELATION_ID",
-        "IDENTIFIER_1",
-        "VERSION_NUMBER_1",
-        "VERSION_DATE_1",
-        "IDENTIFIER_2",
-        "VERSION_NUMBER_2",
-        "VERSION_DATE_2",
-        "CONFIDENCE",
-    ]
+    if expected_columns:
+        fieldnames = list(expected_columns.keys())
+        logger.debug("Using the DB config for ONS UPRN Directory")
+    else:
+        raise ValueError("Expected columns must be provided for ONS UPRN Directory processing")
 
     errors = []
     total_rows_processed = 0
@@ -120,6 +157,10 @@ def load_csv_data(
 
         try:
             df_chunk = pd.DataFrame(batch)
+
+            if expected_columns:
+                df_chunk = clean_dataframe_for_motherduck(df_chunk, expected_columns)
+
             insert_table(df_chunk, conn, schema, name, processor_type)
 
             batch_size = len(batch)
@@ -135,18 +176,14 @@ def load_csv_data(
             handle_error(message, e)
 
     try:
-        # Get and process the data
-        logger.info(f"Downloading file from {url}")
-        response = requests.get(url, stream=True)
+        actual_url = fetch_redirect_url(url)
+        response = requests.get(actual_url, stream=True)
         response.raise_for_status()
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            # Download and extract zip file
             zip_path = os.path.join(temp_dir, "temp.zip")
-
-            # Add progress bar for download
             total_size = int(response.headers.get("content-length", 0))
-            file_size = total_size  # Store for metadata
+            file_size = total_size
             logger.info(f"Downloading {total_size / 1024 / 1024:.2f} MB")
 
             with open(zip_path, "wb") as zip_file:
@@ -161,47 +198,50 @@ def load_csv_data(
             with zipfile.ZipFile(zip_path, "r") as zip_ref:
                 zip_ref.extractall(temp_dir)
 
-            # Find CSV file
-            csv_file = next(
-                (
-                    os.path.join(temp_dir, f)
-                    for f in os.listdir(temp_dir)
-                    if f.endswith(".csv")
-                ),
-                None,
-            )
+            csv_files = []
+            for root, dirs, files in os.walk(temp_dir):
+                if "Data" in dirs:
+                    data_dir = os.path.join(root, "Data")
+                    for filename in os.listdir(data_dir):
+                        if filename.endswith(".csv") and filename.startswith("ONSUD"):
+                            csv_file_path = os.path.join(data_dir, filename)
+                            csv_files.append(csv_file_path)
+                            logger.info(f"Found CSV file: {filename}")
 
-            if not csv_file:
-                handle_error("No CSV file found in the zip archive")
-                raise FileNotFoundError("No CSV file found in the zip archive")
+            if not csv_files:
+                handle_error("No ONSUD CSV files found in the zip archive")
+                raise FileNotFoundError("No ONSUD CSV files found in the zip archive")
 
-            # Get total line count for progress bar
-            total_lines = sum(1 for _ in open(csv_file))
-            logger.info(f"Processing {total_lines - 1} rows from CSV")  # -1 for header
+            logger.info(f"Found {len(csv_files)} ONSUD CSV files to process")
 
-            # Process CSV data
-            current_batch = []
-            with open(csv_file, "r", newline="") as file:
-                reader = csv.DictReader(file, fieldnames=fieldnames)
-                next(reader)  # Skip header
+            # Process each CSV file
+            for csv_file in csv_files:
+                logger.info(f"Processing file: {os.path.basename(csv_file)}")
 
-                for i, row in enumerate(
-                    tqdm(reader, total=total_lines - 1, desc="Processing rows"), 1
-                ):
-                    try:
-                        current_batch.append(row)
+                total_lines = sum(1 for _ in open(csv_file))
+                logger.info(f"Processing {total_lines - 1} rows from {os.path.basename(csv_file)}")
 
-                        if len(current_batch) >= batch_limit:
-                            process_batch(current_batch)
-                            current_batch = []
+                current_batch = []
+                with open(csv_file, "r", newline="") as file:
+                    reader = csv.DictReader(file, fieldnames=fieldnames)
+                    next(reader)
 
-                    except Exception as e:
-                        handle_error("Error processing row", e, i)
-                        continue
+                    for i, row in enumerate(
+                        tqdm(reader, total=total_lines - 1, desc=f"Processing {os.path.basename(csv_file)}"), 1
+                    ):
+                        try:
+                            current_batch.append(row)
 
-                # Process remaining rows
-                if current_batch:
-                    process_batch(current_batch, is_final=True)
+                            if len(current_batch) >= batch_limit:
+                                process_batch(current_batch)
+                                current_batch = []
+
+                        except Exception as e:
+                            handle_error("Error processing row", e, i)
+                            continue
+
+                    if current_batch:
+                        process_batch(current_batch, is_final=True)
 
     except Exception as e:
         handle_error("Error processing the zip file", e)
@@ -217,7 +257,7 @@ def load_csv_data(
             f"Completed processing. Total rows processed: {total_rows_processed}"
         )
 
-    return total_rows_processed, file_size
+    return total_rows_processed, file_size, len(fieldnames)
 
 
 def process_data(
@@ -246,23 +286,28 @@ def process_data(
     elif processor_type:
         proc_type = processor_type
     else:
-        proc_type = DataProcessorType.MOTHERDUCK  # Default fallback
+        proc_type = DataProcessorType.MOTHERDUCK
 
-    logger.info(f"Starting OS USRN-UPRN processing from {url} for {proc_type}")
+    logger.info(f"Starting ONS UPRN Directory processing from {url} for {proc_type}")
 
-    # If config is provided, use metadata tracking if not, use the old method
     if config:
         with metadata_tracker(config, conn, url) as tracker:
             try:
-                total_rows, file_size = load_csv_data(
-                    url, conn, batch_limit, schema_name, table_name, proc_type
+                expected_columns = config.db_template if config else None
+                total_rows, file_size, fieldnames_count = load_csv_data(
+                    url,
+                    conn,
+                    batch_limit,
+                    schema_name,
+                    table_name,
+                    proc_type,
+                    expected_columns,
                 )
 
-                # Update tracker with processing stats
                 tracker.set_rows_processed(total_rows)
                 tracker.set_file_size(file_size)
                 tracker.add_info("batch_limit", batch_limit)
-                tracker.add_info("fieldnames_count", 8)
+                tracker.add_info("fieldnames_count", fieldnames_count)
 
                 logger.success(f"Data inserted into {schema_name}.{table_name}")
 
@@ -270,10 +315,11 @@ def process_data(
                 logger.error(f"Error processing data: {e}")
                 raise
     else:
-        # Backward compatibility - no metadata tracking - but you should always use the method above
         logger.warning("No config provided - metadata logging disabled")
         try:
-            load_csv_data(url, conn, batch_limit, schema_name, table_name, proc_type)
+            total_rows, file_size, fieldnames_count = load_csv_data(
+                url, conn, batch_limit, schema_name, table_name, proc_type, None
+            )
             logger.success(f"Data inserted into {schema_name}.{table_name}")
         except Exception as e:
             logger.error(f"Error processing data: {e}")

@@ -6,6 +6,8 @@ from loguru import logger
 from tqdm import tqdm
 from stream_unzip import stream_unzip
 import time
+from ..data_sources.data_source_config import DataSourceConfig
+from ..data_processors.utils.metadata_logger import metadata_tracker
 
 
 def insert_into_motherduck(df: pd.DataFrame, conn, schema: str, table: str) -> bool:
@@ -91,7 +93,7 @@ def validate_column_names(
 
 
 def stream_csv_from_zip(
-    zip_url: str, batch_size: int, expected_columns: Optional[Dict[str, str]] = None
+    zip_url: str, batch_size: int, expected_columns: Optional[Dict[str, str]] = None, tracker=None
 ) -> Iterator[pd.DataFrame]:
     """
     Stream CSV data from a ZIP file with optional column validation.
@@ -105,13 +107,14 @@ def stream_csv_from_zip(
         DataFrames containing batch_size rows
     """
     try:
-        # Start streaming
         logger.info(f"Starting stream from {zip_url}")
         response = requests.get(zip_url, stream=True, timeout=30)
         response.raise_for_status()
 
-        # Get file size for progress tracking
         total_size = int(response.headers.get("content-length", 0))
+
+        if tracker:
+            tracker.set_file_size(total_size)
 
         # Stream data
         with tqdm(
@@ -225,7 +228,8 @@ def process_streaming_data(
     schema_name: str,
     table_name: str,
     expected_columns: Optional[Dict[str, str]] = None,
-) -> None:
+    tracker=None,
+) -> Tuple[int, int]:
     """
     Process CSV data from ZIP URL using true streaming.
 
@@ -245,7 +249,7 @@ def process_streaming_data(
         logger.info(f"Starting streaming process for {url}")
 
         # Process streamed batches
-        for df_batch in stream_csv_from_zip(url, batch_size, expected_columns):
+        for df_batch in stream_csv_from_zip(url, batch_size, expected_columns, tracker):
             batch_count += 1
             batch_rows = len(df_batch)
 
@@ -273,6 +277,12 @@ def process_streaming_data(
                 f"Completed processing {table_name} with {total_rows} rows in {batch_count} batches"
             )
 
+        if tracker:
+            tracker.add_info("total_batches", batch_count)
+            tracker.add_info("errors_count", len(errors))
+
+        return total_rows, 0  # File size tracked in stream_csv_from_zip
+
     except Exception as e:
         error_msg = f"Error processing {url}: {e}"
         logger.error(error_msg)
@@ -294,6 +304,7 @@ def process_bduk(
     conn,
     schema_name: str,
     expected_columns: Optional[Dict[str, str]] = None,
+    config: Optional[DataSourceConfig] = None,
 ) -> None:
     """
     Process multiple BDUK files.
@@ -311,17 +322,43 @@ def process_bduk(
 
     # Process each file
     for zip_url, table_name in zip(download_links, table_names):
-        logger.info(f"Processing {table_name}")
+        logger.info(f"Processing {table_name} from {zip_url}")
 
-        try:
-            process_streaming_data(
-                url=zip_url,
-                batch_size=batch_size,
-                conn=conn,
-                schema_name=schema_name,
-                table_name=table_name,
-                expected_columns=expected_columns,
-            )
-        except Exception as e:
-            logger.error(f"Failed to process {table_name}: {e}")
-            continue
+        if config:
+            with metadata_tracker(config, conn, zip_url) as tracker:
+                try:
+                    total_rows, file_size = process_streaming_data(
+                        url=zip_url,
+                        batch_size=batch_size,
+                        conn=conn,
+                        schema_name=schema_name,
+                        table_name=table_name,
+                        expected_columns=expected_columns,
+                        tracker=tracker,
+                    )
+
+                    tracker.set_rows_processed(total_rows)
+                    tracker.add_info("batch_size", batch_size)
+                    tracker.add_info("table_name", table_name)
+                    tracker.add_info("file_format", "zip_with_csvs")
+
+                    logger.success(f"Completed processing {table_name}")
+
+                except Exception as e:
+                    logger.error(f"Failed to process {table_name}: {e}")
+                    raise
+        else:
+            logger.warning("No config provided - metadata logging disabled")
+            try:
+                process_streaming_data(
+                    url=zip_url,
+                    batch_size=batch_size,
+                    conn=conn,
+                    schema_name=schema_name,
+                    table_name=table_name,
+                    expected_columns=expected_columns,
+                )
+                logger.success(f"Completed processing {table_name}")
+            except Exception as e:
+                logger.error(f"Failed to process {table_name}: {e}")
+                continue

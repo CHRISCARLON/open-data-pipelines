@@ -5,13 +5,11 @@ from .data_source_config import (
     TimeRange,
     DataSourceConfig,
 )
-from datetime import datetime
-from datetime import timedelta
 
 
-class OsUsrnUprn(DataSourceConfig):
+class ONSUprnDirectory(DataSourceConfig):
     """
-    Configuration class for OS USRN UPRN data source.
+    Configuration class for National Statistic Postcode Lookup data source.
     Implements the DataSourceConfigProtocol.
     """
 
@@ -22,17 +20,17 @@ class OsUsrnUprn(DataSourceConfig):
         batch_limit: Optional[int] = None,
     ):
         """
-        Initialise a OS USRN UPRN configuration.
+        Initialise National Statistic Postcode Lookup configuration.
 
         Args:
             processor_type: The type of data processor to use
-            time_range: The time range for the data
+            time_range: The time range for the data (always uses 202503 data)
             batch_limit: Optional limit for batch processing
         """
         self._processor_type = processor_type
         self._time_range = time_range
         self.batch_limit = batch_limit
-        self._source_type = DataSourceType.OS_USRN_UPRN
+        self._source_type = DataSourceType.ONSUprnDirectory
 
     @property
     def processor_type(self) -> DataProcessorType:
@@ -54,53 +52,61 @@ class OsUsrnUprn(DataSourceConfig):
     @property
     def download_links(self) -> list[str]:
         """
-        Constructs download URL using last month's data for USRN-UPRN.
-
-        Returns:
-            list[str]: List containing the download URL for USRN-UPRN data
+        Get the download links for National Statistic Postcode Lookup data.
         """
-        # Always use last month since current month data may not be available yet
-        now = datetime.now()
-        last_month = now - timedelta(days=30)
-        date_format = f"{last_month.year}-{last_month.month:02d}"
-
-        file_name = f"lids-{date_format}_csv_BLPU-UPRN-Street-USRN-11.zip"
-        download_url = (
-            f"{self.base_url}?area=GB&format=CSV&fileName={file_name}&redirect"
-        )
-
-        return [download_url]
+        return [self.source_type.base_url]
 
     @property
     def table_names(self) -> List[str]:
-        """
-        Get all table names when multiple historic tables are available.
-        """
-
-        return ["os_open_linked_identifiers_uprn_usrn_latest"]
+        """Get the table name for National Statistic Postcode Lookup data."""
+        return ["ons_uprn_directory"]
 
     @property
     def schema_name(self) -> str:
-        """
-        Get the schema name for the Street Manager data based on last month.
-        """
-        return "os_open_linked_identifiers"
+        """Get the schema name for the Postcode P001 data."""
+        return "post_code_data"
 
     @property
     def db_template(self) -> dict:
+        """
+        Database template
+        """
         return {
-            "correlation_id": "VARCHAR",
-            "identifier_1": "BIGINT",
-            "version_number_1": "VARCHAR",
-            "version_date_1": "BIGINT",
-            "identifier_2": "BIGINT",
-            "version_number_2": "VARCHAR",
-            "version_date_2": "BIGINT",
-            "confidence": "VARCHAR",
+            "uprn": "BIGINT",
+            "gridgb1e": "BIGINT",
+            "gridgb1n": "BIGINT",
+            "pcds": "VARCHAR",
+            "cty24cd": "VARCHAR",
+            "ced23cd": "VARCHAR",
+            "lad24cd": "VARCHAR",
+            "wd24cd": "VARCHAR",
+            "parncp24cd": "VARCHAR",
+            "hlth19cd": "VARCHAR",
+            "ctry24cd": "VARCHAR",
+            "rgn24cd": "VARCHAR",
+            "pcon24cd": "VARCHAR",
+            "eer20cd": "VARCHAR",
+            "ttwa15cd": "VARCHAR",
+            "itl25cd": "VARCHAR",
+            "npark16cd": "VARCHAR",
+            "oa21cd": "VARCHAR",
+            "lsoa21cd": "VARCHAR",
+            "msoa21cd": "VARCHAR",
+            "wz11cd": "VARCHAR",
+            "sicbl24cd": "VARCHAR",
+            "bua24cd": "VARCHAR",
+            "buasd11cd": "VARCHAR",
+            "ruc21ind": "VARCHAR",
+            "oac21ind": "VARCHAR",
+            "lep21cd1": "VARCHAR",
+            "lep21cd2": "VARCHAR",
+            "pfa23cd": "VARCHAR",
+            "imd19ind": "BIGINT",
         }
 
     @property
     def metadata_schema_name(self) -> str:
+        """Get the metadata schema name for tracking processing information."""
         return f"{self.schema_name}"
 
     @property
@@ -150,32 +156,26 @@ class OsUsrnUprn(DataSourceConfig):
 
     def __str__(self) -> str:
         """String representation of the configuration."""
-        links_str = ", ".join(self.download_links[:2])
-        if len(self.download_links) > 2:
-            links_str += f", ... ({len(self.download_links)} total)"
-
         return (
-            f"OsUsrnUprnConfig(processor={self.processor_type.value}, "
+            f"NationalStatisticPostcodeLookup(processor={self.processor_type.value}, "
             f"source={self.source_type.code}, "
-            f"base_url={self.base_url}, "
             f"time_range={self.time_range.value}, "
             f"batch_limit={self.batch_limit}, "
-            f"download_links=[{links_str}]), "
+            f"download_links={self.download_links}, "
             f"schema_name={self.schema_name}, "
-            f"table_names={self.table_names}, "
-            f"db_template={self.db_template}"
+            f"table_names={self.table_names})"
         )
 
     @classmethod
-    def create_default_latest(cls) -> "OsUsrnUprn":
-        """Create a default OS USRN UPRN configuration."""
+    def create_default(cls) -> "ONSUprnDirectory":
+        """Create a default National Statistic Postcode Lookup configuration."""
         return cls(
             processor_type=DataProcessorType.MOTHERDUCK,
             time_range=TimeRange.LATEST,
-            batch_limit=500000,
+            batch_limit=250000,
         )
 
 
 if __name__ == "__main__":
-    config = OsUsrnUprn.create_default_latest()
+    config = ONSUprnDirectory.create_default()
     print(config)

@@ -118,9 +118,9 @@ def clean_dataframe_for_motherduck(
             df_clean[col] = df_clean[col].replace(["", "nan", "NaN", "null"], None)
 
             if dtype == "BIGINT":
-                df_clean[col] = pd.to_numeric(df_clean[col], errors="coerce").astype(
-                    "Int64"
-                )
+                # Convert to numeric first, then to nullable integer
+                numeric_series = pd.to_numeric(df_clean[col], errors="coerce")
+                df_clean[col] = pd.Series(numeric_series).astype("Int64")
             elif dtype == "DOUBLE":
                 df_clean[col] = pd.to_numeric(df_clean[col], errors="coerce")
 

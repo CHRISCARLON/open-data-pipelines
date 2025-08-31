@@ -1,7 +1,6 @@
 from typing import Protocol, runtime_checkable
 from enum import Enum
 
-
 class DataProcessorType(Enum):
     """Enum for different types of data processors"""
 
@@ -40,9 +39,13 @@ class DataSourceType(Enum):
         "os_usrn_uprn",
         "https://api.os.uk/downloads/v1/products/LIDS/downloads",
     )
-    BDUK_PREMISES = (
-        "bduk_premises",
+    BDUK_PREMISES_SEPT_2024 = (
+        "bduk_premises_sept_2024",
         "https://www.gov.uk/government/publications/premises-in-bduk-plans-england-and-wales",
+    )
+    BDUK_PREMISES_JUL_2025 = (
+        "bduk_premises_jul_2025",
+        "https://www.gov.uk/government/publications/january-2025-omr-and-premises-in-bduk-plans-england-and-wales",
     )
     CADENT_GAS = (
         "cadent_gas_underground_pipes",
@@ -78,8 +81,13 @@ class DataSourceType(Enum):
     )
     NATIONAL_STATISTIC_POSTCODE_LOOKUP = (
         "national_statistic_postcode_lookup",
-        "https://www.arcgis.com/sharing/rest/content/items/077631e063eb4e1ab43575d01381ec33/data",
+        "https://www.arcgis.com/sharing/rest/content/items/2410f94375674cd2a6182b4f5e531bb8/data",
     )
+    ONSUprnDirectory = (
+        "ons_uprn_directory",
+        "https://geoportal.statistics.gov.uk"
+    )
+
     # Add other data sources as needed
 
     def __init__(self, code: str, base_url: str):

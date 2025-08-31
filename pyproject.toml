@@ -34,6 +34,7 @@ dependencies = [
     "dbt-duckdb==1.9.4",
     "psycopg2-binary>=2.9.10",
     "fiona>=1.10.1",
+    "herdcats>=0.1.4",
 ]
 
 [tool.uv]

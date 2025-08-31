@@ -38,11 +38,7 @@ def insert_into_motherduck(df, conn, schema: str, table: str):
 
             conn.register("df_temp", df)
 
-            if schema == "open_usrns_latest" and table == "os_open_usrns":
-                insert_sql = """INSERT INTO open_usrns_latest.os_open_usrns SELECT * FROM df_temp"""
-            else:
-                raise ValueError(f"Invalid schema or table: {schema}.{table}")
-
+            insert_sql = f"""INSERT INTO "{schema}"."{table}" SELECT * FROM df_temp"""
             conn.execute(insert_sql)
 
             if attempt > 0:
@@ -118,14 +114,16 @@ def load_geopackage_open_usrns(
             with zipfile.ZipFile(zip_path, "r") as zip_ref:
                 zip_ref.extractall(temp_dir)
 
-            # Find the GeoPackage file
             gpkg_file = None
             for root, dirs, files in os.walk(temp_dir):
-                logger.info(f"Root: {dirs}")
+                logger.info(f"Searching in directory: {root}")
+                logger.info(f"Found files: {files}")
                 for file_name in files:
                     if file_name.endswith(".gpkg"):
                         gpkg_file = os.path.join(root, file_name)
-                    logger.success(f"The GeoPackage file is: {gpkg_file}")
+                        logger.success(f"Found GeoPackage file: {gpkg_file}")
+                        break
+                if gpkg_file:
                     break
 
             if gpkg_file:

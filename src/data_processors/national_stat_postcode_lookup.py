@@ -30,9 +30,9 @@ def clean_dataframe_for_motherduck(
             df_clean[col] = df_clean[col].replace(["", "nan", "NaN", "null"], None)
 
             if dtype == "BIGINT":
-                df_clean[col] = pd.to_numeric(df_clean[col], errors="coerce").astype(
-                    "Int64"
-                )
+                # Convert to numeric first, then to nullable integer
+                numeric_series = pd.to_numeric(df_clean[col], errors="coerce")
+                df_clean[col] = pd.Series(numeric_series).astype("Int64")
             elif dtype == "DOUBLE":
                 df_clean[col] = pd.to_numeric(df_clean[col], errors="coerce")
 
@@ -132,43 +132,7 @@ def load_csv_data(
         fieldnames = list(expected_columns.keys())
         logger.debug("Using the DB config")
     else:
-        fieldnames = [
-            "pcd",
-            "pcd2",
-            "pcds",
-            "dointr",
-            "doterm",
-            "usertype",
-            "oseast1m",
-            "osnrth1m",
-            "osgrdind",
-            "oa21",
-            "cty",
-            "ced",
-            "laua",
-            "ward",
-            "nhser",
-            "ctry",
-            "rgn",
-            "pcon",
-            "ttwa",
-            "itl",
-            "park",
-            "lsoa21",
-            "msoa21",
-            "wz11",
-            "sicbl",
-            "bua24",
-            "ruc21",
-            "oac11",
-            "lat",
-            "long",
-            "lep1",
-            "lep2",
-            "pfa",
-            "imd",
-            "icb",
-        ]
+        raise ValueError("Expected columns must be provided for National Stat Post Code processing")
 
     errors = []
     total_rows_processed = 0
