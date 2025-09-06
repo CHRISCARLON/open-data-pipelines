@@ -51,8 +51,8 @@ Github Actions are used to run the data pipelines with cron schedules.
 | **Naptan Nodes** | Scheduled | Monthly | 24th | 1:30 AM |
 | **National Statistics Postcode Lookup** | Scheduled | Monthly | 17th | 1:30 AM |
 | **NHS Prescriptions** | Scheduled | Monthly | 25th | 3:30 PM |
-| **OS USRN UPRN** (open_usrns.yml) | Scheduled | Monthly | 11th | 1:30 AM |
-| **OS USRN UPRN** (os_usrn_uprn.yml) | Scheduled | Monthly | 10th | 1:30 AM |
+| **OS USRN** | Scheduled | Monthly | 11th | 1:30 AM |
+| **OS USRN UPRN** | Scheduled | Monthly | 10th | 1:30 AM |
 | **Section 58** | Scheduled | Monthly | 3rd | 3:00 AM |
 | **Street Manager** | Scheduled | Monthly | 4th | 3:00 AM |
 | **Pytest Street Manager Tests** | On Push/PR | - | - | When tests/** files change |

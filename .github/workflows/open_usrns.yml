@@ -1,4 +1,4 @@
-name: OS USRN UPRN
+name: OS USRN
 
 on:
   schedule:
