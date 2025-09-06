@@ -2,7 +2,7 @@ name: Section 58
 
 on:
   schedule:
-    - cron: "0 3 8 * *"
+    - cron: "0 3 3 * *"
 
 jobs:
   run-pipeline:
