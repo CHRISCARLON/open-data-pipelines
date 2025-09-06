@@ -1,8 +1,9 @@
 name: Section 58
 
 on:
-  schedule:
-    - cron: "0 5 7 * *"
+  push:
+    branches:
+      - main
 
 jobs:
   run-pipeline:
