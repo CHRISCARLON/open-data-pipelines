@@ -1,8 +1,9 @@
 name: Geoplace SWA
 
 on:
-  schedule:
-    - cron: "30 1 1,15 * *"
+  push:
+    branches:
+      - main
 
 jobs:
   run-pipeline:
@@ -16,7 +17,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v
         with:
           python-version-file: "pyproject.toml"
 

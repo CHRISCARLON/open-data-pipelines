@@ -6,7 +6,7 @@ authors = [
     {name = "christophercarlon", email = "cmcarleone@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = "==3.11"
 dependencies = [
     "pandas>=2.2.1",
     "openpyxl>=3.1.2",
@@ -43,4 +43,3 @@ dev-dependencies = [
     "pytest>=8.2.1",
     "pytest-cov>=5.0.0",
 ]
-

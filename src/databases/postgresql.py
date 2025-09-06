@@ -123,7 +123,11 @@ class PostgreSQLManager(DatabaseProtocolTrait):
         success = True
         for table_name in config.table_names:
             try:
-                table_schema = config.db_template
+                if isinstance(config.db_template, dict) and table_name in config.db_template:
+                    table_schema = config.db_template[table_name]
+                else:
+                    table_schema = config.db_template
+
                 table_success = self.create_table(schema, table_name, table_schema)
                 if not table_success:
                     success = False

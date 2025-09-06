@@ -8,7 +8,7 @@ This project mainly uses MotherDuck as its data warehouse but it is configured t
 > Currently switching most of the data pipelines from AWS to run in Github Actions - this is a work in progress but massively reduces complexity and cost.
 
 > [!NOTE]
-> Currently looking to implement DLT into this project - some pipelines will start use refernce DLT methods as a result.
+> Currently looking to implement DLT into this project - some pipelines will start to use & refernce DLT methods as a result.
 
 ## Purpose
 
