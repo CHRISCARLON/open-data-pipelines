@@ -1,8 +1,9 @@
 name: Street Manager
 
 on:
-  schedule:
-    - cron: "0 3 7 * *"
+  push:
+    branches:
+      - main
 
 jobs:
   run-pipeline:
