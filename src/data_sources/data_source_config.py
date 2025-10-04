@@ -47,6 +47,10 @@ class DataSourceType(Enum):
         "bduk_premises_jul_2025",
         "https://www.gov.uk/government/publications/january-2025-omr-and-premises-in-bduk-plans-england-and-wales",
     )
+    BDUK_PREMISES_SEPT_2025 = (
+        "bduk_premises_sept_2025",
+        "https://www.gov.uk/government/publications/may-2025-omr-and-premises-in-bduk-plans-england-and-wales",
+    )
     CADENT_GAS = (
         "cadent_gas_underground_pipes",
         "https://cadentgas.opendatasoft.com/api/explore/v2.1/catalog/datasets/gpi-pipe-infrastructure-open/exports/parquet",

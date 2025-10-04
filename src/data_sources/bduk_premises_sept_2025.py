@@ -35,7 +35,7 @@ class BDUKPremises(DataSourceConfig):
         self._processor_type = processor_type
         self._time_range = time_range
         self.batch_limit = batch_limit
-        self._source_type = DataSourceType.BDUK_PREMISES_SEPT_2024
+        self._source_type = DataSourceType.BDUK_PREMISES_SEPT_2025
 
     @property
     def processor_type(self) -> DataProcessorType:
@@ -106,34 +106,110 @@ class BDUKPremises(DataSourceConfig):
     @property
     def table_names(self) -> list[str]:
         """Get the table names for the configured data source."""
-        return [url.split("/")[-1].replace(".zip", "") for url in self.download_links]
+        # Extract YYYYMM from base_url (e.g., "may-2025" -> "202505")
+        import re
+        url_parts = self.base_url.split("/")
+        month_year = next((p for p in url_parts if re.match(r'[a-z]+-\d{4}', p)), None)
+
+        if month_year:
+            parts = month_year.split("-")
+            month_str, year = parts[0], parts[1]
+            month_map = {
+                "january": "01", "february": "02", "march": "03", "april": "04",
+                "may": "05", "june": "06", "july": "07", "august": "08",
+                "september": "09", "october": "10", "november": "11", "december": "12"
+            }
+            date_prefix = f"{year}{month_map.get(month_str.lower(), '00')}_"
+        else:
+            date_prefix = ""
+
+        return [
+            f"{date_prefix}BDUK_uprn_release_{url.split('/')[-1].replace('.zip', '').replace('_', ' ').title().replace(' ', '_')}"
+            for url in self.download_links
+        ]
 
     @property
     def db_template(self) -> dict:
         return {
-            "UPRN": "VARCHAR",
+            "uprn": "BIGINT",
             "struprn": "VARCHAR",
-            "bduk_recognised_premises": "VARCHAR",
-            "Country": "VARCHAR",
+            "bduk_recognised_premises": "BOOLEAN",
+            "country": "VARCHAR",
             "postcode": "VARCHAR",
-            "lot_id": "VARCHAR",
+            "lot_id": "BIGINT",
             "lot_name": "VARCHAR",
             "subsidy_control_status": "VARCHAR",
-            "current_gigabit": "VARCHAR",
-            "future_gigabit": "VARCHAR",
+            "current_gigabit": "BOOLEAN",
+            "future_gigabit": "BOOLEAN",
             "local_authority_district_ons_code": "VARCHAR",
             "local_authority_district_ons": "VARCHAR",
             "region_ons_code": "VARCHAR",
             "region_ons": "VARCHAR",
-            "bduk_gis": "VARCHAR",
+            "bduk_gis": "BOOLEAN",
             "bduk_gis_contract_scope": "VARCHAR",
-            "gis_final_coverage_date": "VARCHAR",
-            "bduk_vouchers": "VARCHAR",
-            "bduk_superfast": "VARCHAR",
-            "bduk_hubs": "VARCHAR",
-            "supplier": "VARCHAR",
-            "contract_name": "VARCHAR",
+            "bduk_gis_final_coverage_date": "VARCHAR",
+            "bduk_gis_contract_name": "VARCHAR",
+            "bduk_gis_supplier": "VARCHAR",
+            "bduk_vouchers": "BOOLEAN",
+            "bduk_vouchers_contract_name": "VARCHAR",
+            "bduk_vouchers_supplier": "VARCHAR",
+            "bduk_superfast": "BOOLEAN",
+            "bduk_superfast_contract_name": "VARCHAR",
+            "bduk_superfast_supplier": "VARCHAR",
+            "bduk_hubs": "BOOLEAN",
+            "bduk_hubs_contract_name": "VARCHAR",
+            "bduk_hubs_supplier": "VARCHAR",
         }
+
+    @property
+    def metadata_schema_name(self) -> str:
+        """Get the metadata schema name for tracking processing information."""
+        return f"{self.schema_name}"
+
+    @property
+    def metadata_table_name(self) -> str:
+        """Get the metadata table name for logging processing runs."""
+        return "processing_logs"
+
+    @property
+    def metadata_db_template(self) -> dict:
+        """Get the database template for metadata logging table."""
+        if self.processor_type == DataProcessorType.POSTGRESQL:
+            return {
+                "log_id": "SERIAL PRIMARY KEY",
+                "data_source": "VARCHAR(100)",
+                "schema_name": "VARCHAR(100)",
+                "table_name": "VARCHAR(100)",
+                "processor_type": "VARCHAR(50)",
+                "url": "TEXT",
+                "start_time": "TIMESTAMP",
+                "end_time": "TIMESTAMP",
+                "duration_seconds": "DOUBLE PRECISION",
+                "rows_processed": "BIGINT",
+                "file_size_bytes": "BIGINT",
+                "status": "VARCHAR(20)",
+                "error_message": "TEXT",
+                "additional_info": "TEXT",
+                "created_at": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+            }
+        else:  # MotherDuck
+            return {
+                "log_id": "VARCHAR(36) PRIMARY KEY",
+                "data_source": "VARCHAR",
+                "schema_name": "VARCHAR",
+                "table_name": "VARCHAR",
+                "processor_type": "VARCHAR",
+                "url": "VARCHAR",
+                "start_time": "TIMESTAMP",
+                "end_time": "TIMESTAMP",
+                "duration_seconds": "DOUBLE",
+                "rows_processed": "BIGINT",
+                "file_size_bytes": "BIGINT",
+                "status": "VARCHAR",
+                "error_message": "VARCHAR",
+                "additional_info": "TEXT",
+                "created_at": "TIMESTAMP",
+            }
 
     def __str__(self) -> str:
         return (
@@ -154,7 +230,7 @@ class BDUKPremises(DataSourceConfig):
         return cls(
             processor_type=DataProcessorType.MOTHERDUCK,
             time_range=TimeRange.LATEST,
-            batch_limit=100000,
+            batch_limit=200000,
         )
 
 
