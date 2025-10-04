@@ -62,7 +62,7 @@ class OsUsrnUprn(DataSourceConfig):
         """
         # Always use last month since current month data may not be available yet
         now = datetime.now()
-        last_month = now - timedelta(days=60)
+        last_month = now - timedelta(days=30)
         date_format = f"{last_month.year}-{last_month.month:02d}"
 
         file_name = f"lids-{date_format}_csv_BLPU-UPRN-Street-USRN-11.zip"
