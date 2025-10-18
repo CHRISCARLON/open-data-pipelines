@@ -7,11 +7,7 @@ from ..databases.database_config import DatabaseProtocolTrait
 
 class MotherDuckManager(DatabaseProtocolTrait):
     """
-    Generic MotherDuck manager that handles connections and table operations
-    based on data source configurations.
-
-    This class combines connection management with table creation capabilities,
-    allowing for a streamlined workflow when working with different data sources.
+    Generic MotherDuck manager that handles connections and table operations.
     """
 
     def __init__(self, token: str, database: str):
@@ -144,7 +140,11 @@ class MotherDuckManager(DatabaseProtocolTrait):
         success = True
         for table_name in config.table_names:
             try:
-                if (
+                # Determine the table schema
+                # Check if config has get_table_template method (for data with varying schemas)
+                if hasattr(config, 'get_table_template'):
+                    table_schema = config.get_table_template(table_name)
+                elif (
                     isinstance(config.db_template, dict)
                     and table_name in config.db_template
                 ):

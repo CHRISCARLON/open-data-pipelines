@@ -9,7 +9,7 @@ from .data_source_config import (
 
 class ONSUprnDirectory(DataSourceConfig):
     """
-    Configuration class for National Statistic Postcode Lookup data source.
+    Configuration class for ONS UPRN Directory data source.
     Implements the DataSourceConfigProtocol.
     """
 
@@ -20,11 +20,11 @@ class ONSUprnDirectory(DataSourceConfig):
         batch_limit: Optional[int] = None,
     ):
         """
-        Initialise National Statistic Postcode Lookup configuration.
+        Initialise ONS UPRN Directory configuration.
 
         Args:
             processor_type: The type of data processor to use
-            time_range: The time range for the data (always uses 202503 data)
+            time_range: The time range for the data
             batch_limit: Optional limit for batch processing
         """
         self._processor_type = processor_type
@@ -52,18 +52,18 @@ class ONSUprnDirectory(DataSourceConfig):
     @property
     def download_links(self) -> list[str]:
         """
-        Get the download links for National Statistic Postcode Lookup data.
+        Get the download links for ONS UPRN Directory data.
         """
         return [self.source_type.base_url]
 
     @property
     def table_names(self) -> List[str]:
-        """Get the table name for National Statistic Postcode Lookup data."""
+        """Get the table name for ONS UPRN Directory data."""
         return ["ons_uprn_directory"]
 
     @property
     def schema_name(self) -> str:
-        """Get the schema name for the Postcode P001 data."""
+        """Get the schema name for the ONS UPRN Directory data."""
         return "post_code_data"
 
     @property
@@ -157,7 +157,7 @@ class ONSUprnDirectory(DataSourceConfig):
     def __str__(self) -> str:
         """String representation of the configuration."""
         return (
-            f"NationalStatisticPostcodeLookup(processor={self.processor_type.value}, "
+            f"ONSUprnDirectory(processor={self.processor_type.value}, "
             f"source={self.source_type.code}, "
             f"time_range={self.time_range.value}, "
             f"batch_limit={self.batch_limit}, "
@@ -168,7 +168,7 @@ class ONSUprnDirectory(DataSourceConfig):
 
     @classmethod
     def create_default(cls) -> "ONSUprnDirectory":
-        """Create a default National Statistic Postcode Lookup configuration."""
+        """Create a default ONS UPRN Directory configuration."""
         return cls(
             processor_type=DataProcessorType.MOTHERDUCK,
             time_range=TimeRange.LATEST,

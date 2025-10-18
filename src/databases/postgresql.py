@@ -123,7 +123,11 @@ class PostgreSQLManager(DatabaseProtocolTrait):
         success = True
         for table_name in config.table_names:
             try:
-                if (
+                # Determine the table schema
+                # Check if config has get_table_template method (for data with varying schemas)
+                if hasattr(config, 'get_table_template'):
+                    table_schema = config.get_table_template(table_name)
+                elif (
                     isinstance(config.db_template, dict)
                     and table_name in config.db_template
                 ):

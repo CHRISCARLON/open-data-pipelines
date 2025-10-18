@@ -128,7 +128,7 @@ class PostCodeP002(DataSourceConfig):
     def __str__(self) -> str:
         """String representation of the configuration."""
         return (
-            f"PostCodeP001Config(processor={self.processor_type.value}, "
+            f"PostCodeP002Config(processor={self.processor_type.value}, "
             f"source={self.source_type.code}, "
             f"time_range={self.time_range.value}, "
             f"batch_limit={self.batch_limit}, "

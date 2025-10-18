@@ -21,7 +21,7 @@ class CodePoint(DataSourceConfig):
         batch_limit: Optional[int] = None,
     ):
         """
-        Initialise a Street Manager configuration.
+        Initialise a Code Point configuration.
 
         Args:
             processor_type: The type of data processor to use

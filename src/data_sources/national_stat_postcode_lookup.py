@@ -63,7 +63,7 @@ class NationalStatisticPostcodeLookup(DataSourceConfig):
 
     @property
     def schema_name(self) -> str:
-        """Get the schema name for the Postcode P001 data."""
+        """Get the schema name for the National Statistic Postcode Lookup data."""
         return "post_code_data"
 
     @property
