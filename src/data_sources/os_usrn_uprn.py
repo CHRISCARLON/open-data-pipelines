@@ -1,3 +1,5 @@
+import requests
+
 from typing import Optional, List
 from .data_source_config import (
     DataProcessorType,
@@ -5,8 +7,6 @@ from .data_source_config import (
     TimeRange,
     DataSourceConfig,
 )
-from datetime import datetime
-from datetime import timedelta
 
 
 class OsUsrnUprn(DataSourceConfig):
@@ -61,16 +61,23 @@ class OsUsrnUprn(DataSourceConfig):
             list[str]: List containing the download URL for USRN-UPRN data
         """
         # Always use last month since current month data may not be available yet
-        now = datetime.now()
-        last_month = now - timedelta(days=30)
-        date_format = f"{last_month.year}-{last_month.month:02d}"
+        response = requests.get("https://api.os.uk/downloads/v1/products/LIDS/downloads")
+        result = response.json()
 
-        file_name = f"lids-{date_format}_csv_BLPU-UPRN-Street-USRN-11.zip"
-        download_url = (
-            f"{self.base_url}?area=GB&format=CSV&fileName={file_name}&redirect"
+        uprn_usrn_index = next(
+            (
+                i
+                for i, item in enumerate(result)
+                if "BLPU-UPRN-Street-USRN-11" in item["fileName"]
+            ),
+            None,
         )
 
-        return [download_url]
+        if uprn_usrn_index is None:
+            raise ValueError("BLPU-UPRN-Street-USRN-11 file not found")
+
+        url = result[uprn_usrn_index]["url"]
+        return [url]
 
     @property
     def table_names(self) -> List[str]:
