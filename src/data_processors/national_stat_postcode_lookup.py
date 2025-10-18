@@ -132,7 +132,9 @@ def load_csv_data(
         fieldnames = list(expected_columns.keys())
         logger.debug("Using the DB config")
     else:
-        raise ValueError("Expected columns must be provided for National Stat Post Code processing")
+        raise ValueError(
+            "Expected columns must be provided for National Stat Post Code processing"
+        )
 
     errors = []
     total_rows_processed = 0

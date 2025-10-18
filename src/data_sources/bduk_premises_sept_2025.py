@@ -108,16 +108,26 @@ class BDUKPremises(DataSourceConfig):
         """Get the table names for the configured data source."""
         # Extract YYYYMM from base_url (e.g., "may-2025" -> "202505")
         import re
+
         url_parts = self.base_url.split("/")
-        month_year = next((p for p in url_parts if re.match(r'[a-z]+-\d{4}', p)), None)
+        month_year = next((p for p in url_parts if re.match(r"[a-z]+-\d{4}", p)), None)
 
         if month_year:
             parts = month_year.split("-")
             month_str, year = parts[0], parts[1]
             month_map = {
-                "january": "01", "february": "02", "march": "03", "april": "04",
-                "may": "05", "june": "06", "july": "07", "august": "08",
-                "september": "09", "october": "10", "november": "11", "december": "12"
+                "january": "01",
+                "february": "02",
+                "march": "03",
+                "april": "04",
+                "may": "05",
+                "june": "06",
+                "july": "07",
+                "august": "08",
+                "september": "09",
+                "october": "10",
+                "november": "11",
+                "december": "12",
             }
             date_prefix = f"{year}{month_map.get(month_str.lower(), '00')}_"
         else:

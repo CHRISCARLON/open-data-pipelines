@@ -93,7 +93,10 @@ def validate_column_names(
 
 
 def stream_csv_from_zip(
-    zip_url: str, batch_size: int, expected_columns: Optional[Dict[str, str]] = None, tracker=None
+    zip_url: str,
+    batch_size: int,
+    expected_columns: Optional[Dict[str, str]] = None,
+    tracker=None,
 ) -> Iterator[pd.DataFrame]:
     """
     Stream CSV data from a ZIP file with optional column validation.

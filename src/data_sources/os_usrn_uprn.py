@@ -61,7 +61,9 @@ class OsUsrnUprn(DataSourceConfig):
             list[str]: List containing the download URL for USRN-UPRN data
         """
         # Always use last month since current month data may not be available yet
-        response = requests.get("https://api.os.uk/downloads/v1/products/LIDS/downloads")
+        response = requests.get(
+            "https://api.os.uk/downloads/v1/products/LIDS/downloads"
+        )
         result = response.json()
 
         uprn_usrn_index = next(

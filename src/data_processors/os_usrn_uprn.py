@@ -16,7 +16,6 @@ from ..data_processors.utils.data_processor_utils import insert_table
 # Basically we need to follow the same pattern that the bduk premises data uses... you never read anything fully into memory
 
 
-
 def insert_into_motherduck(df, conn, schema: str, table: str):
     """
     Takes a connection object and a dataframe

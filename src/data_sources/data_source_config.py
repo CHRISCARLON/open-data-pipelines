@@ -1,6 +1,7 @@
 from typing import Protocol, runtime_checkable
 from enum import Enum
 
+
 class DataProcessorType(Enum):
     """Enum for different types of data processors"""
 
@@ -87,10 +88,7 @@ class DataSourceType(Enum):
         "national_statistic_postcode_lookup",
         "https://www.arcgis.com/sharing/rest/content/items/2410f94375674cd2a6182b4f5e531bb8/data",
     )
-    ONSUprnDirectory = (
-        "ons_uprn_directory",
-        "https://geoportal.statistics.gov.uk"
-    )
+    ONSUprnDirectory = ("ons_uprn_directory", "https://geoportal.statistics.gov.uk")
 
     # Add other data sources as needed
 

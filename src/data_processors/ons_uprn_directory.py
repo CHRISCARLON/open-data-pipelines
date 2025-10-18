@@ -131,7 +131,9 @@ def load_csv_data(
         fieldnames = list(expected_columns.keys())
         logger.debug("Using the DB config for ONS UPRN Directory")
     else:
-        raise ValueError("Expected columns must be provided for ONS UPRN Directory processing")
+        raise ValueError(
+            "Expected columns must be provided for ONS UPRN Directory processing"
+        )
 
     errors = []
     total_rows_processed = 0
@@ -219,7 +221,9 @@ def load_csv_data(
                 logger.info(f"Processing file: {os.path.basename(csv_file)}")
 
                 total_lines = sum(1 for _ in open(csv_file))
-                logger.info(f"Processing {total_lines - 1} rows from {os.path.basename(csv_file)}")
+                logger.info(
+                    f"Processing {total_lines - 1} rows from {os.path.basename(csv_file)}"
+                )
 
                 current_batch = []
                 with open(csv_file, "r", newline="") as file:
@@ -227,7 +231,12 @@ def load_csv_data(
                     next(reader)
 
                     for i, row in enumerate(
-                        tqdm(reader, total=total_lines - 1, desc=f"Processing {os.path.basename(csv_file)}"), 1
+                        tqdm(
+                            reader,
+                            total=total_lines - 1,
+                            desc=f"Processing {os.path.basename(csv_file)}",
+                        ),
+                        1,
                     ):
                         try:
                             current_batch.append(row)

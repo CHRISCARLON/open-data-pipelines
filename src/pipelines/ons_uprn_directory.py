@@ -14,9 +14,7 @@ def ons_geo_portal():
 
         print("Searching for ONSUD datasets...")
         summary = explorer.get_datasets_summary(
-            q="ONSUD",
-            sort="Date Created|created|desc",
-            description=True
+            q="ONSUD", sort="Date Created|created|desc", description=True
         )
 
         target_title = ["ONS UPRN Directory", "July 2025"]
@@ -24,17 +22,21 @@ def ons_geo_portal():
         target_dataset = None
 
         for dataset in summary:
-            title = dataset['title'].lower()
-            if (all(phrase.lower() in title for phrase in target_title) and
-                exclude_phrase.lower() not in title):
+            title = dataset["title"].lower()
+            if (
+                all(phrase.lower() in title for phrase in target_title)
+                and exclude_phrase.lower() not in title
+            ):
                 target_dataset = dataset
                 break
 
         if target_dataset:
-            download_info = explorer.get_download_info(target_dataset['id'])
-            return download_info['download_url']
+            download_info = explorer.get_download_info(target_dataset["id"])
+            return download_info["download_url"]
         else:
-            raise ValueError(f"Target dataset '{target_title}' not found in search results.")
+            raise ValueError(
+                f"Target dataset '{target_title}' not found in search results."
+            )
 
 
 def main():
