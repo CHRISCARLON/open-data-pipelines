@@ -43,21 +43,20 @@ Github Actions are used to run the data pipelines with cron schedules.
 
 ### GitHub Actions Schedule
 
-| Workflow Name | Trigger Type | Schedule | Day of Month | Time (UTC) |
-|---------------|-------------|----------|--------------|------------|
-| **BODS Timetables** | Scheduled | Monthly | 25th | 1:30 AM |
-| **Code Point** | Scheduled | Monthly | 2nd | 1:30 AM |
-| **Geoplace SWA** | Scheduled | Monthly | 24th | 1:30 AM |
-| **Naptan Nodes** | Scheduled | Monthly | 24th | 1:30 AM |
-| **National Statistics Postcode Lookup** | Scheduled | Monthly | 17th | 1:30 AM |
-| **NHS Prescriptions** | Scheduled | Monthly | 25th | 3:30 PM |
-| **OS USRN** | Scheduled | Monthly | 11th | 1:30 AM |
-| **OS USRN UPRN** | Scheduled | Monthly | 10th | 1:30 AM |
-| **Section 58** | Scheduled | Monthly | 3rd | 3:00 AM |
-| **Street Manager** | Scheduled | Monthly | 4th | 3:00 AM |
-| **Pytest Street Manager Tests** | On Push/PR | - | - | When tests/** files change |
-| **Ruff Linter Check & Env File Safeguard** | On Push | - | - | On every push |
-
+| Workflow Name                              | Trigger Type | Schedule    | Day of Month | Time (UTC)                   |
+| ------------------------------------------ | ------------ | ----------- | ------------ | ---------------------------- |
+| **BODS Timetables**                        | Scheduled    | Monthly     | 25th         | 1:30 AM                      |
+| **Code Point**                             | Scheduled    | Monthly     | 2nd          | 1:30 AM                      |
+| **Geoplace SWA**                           | Scheduled    | Monthly     | 24th         | 1:30 AM                      |
+| **Naptan Nodes**                           | Scheduled    | Monthly     | 24th         | 1:30 AM                      |
+| **National Statistics Postcode Lookup**    | Scheduled    | Monthly     | 17th         | 1:30 AM                      |
+| **NHS Prescriptions**                      | Scheduled    | Monthly     | 25th         | 3:30 PM                      |
+| **OS USRN**                                | Scheduled    | Monthly     | 11th         | 1:30 AM                      |
+| **OS USRN UPRN**                           | Scheduled    | Bi-monthly  | 1st          | 12:00 AM                     |
+| **Section 58**                             | Scheduled    | Monthly     | 3rd          | 3:00 AM                      |
+| **Street Manager**                         | Scheduled    | Monthly     | 4th          | 3:00 AM                      |
+| **Pytest Street Manager Tests**            | On Push/PR   | -           | -            | When tests/\*\* files change |
+| **Ruff Linter Check & Env File Safeguard** | On Push      | -           | -            | On every push                |
 
 ## License
 

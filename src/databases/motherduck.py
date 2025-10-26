@@ -60,7 +60,6 @@ class MotherDuckManager(DatabaseProtocolTrait):
         if not self.connection:
             return False
 
-        # Build column definitions from dictionary
         column_defs = ",\n                ".join(
             [f"{col_name} {col_type}" for col_name, col_type in columns.items()]
         )
@@ -141,16 +140,17 @@ class MotherDuckManager(DatabaseProtocolTrait):
         for table_name in config.table_names:
             try:
                 # Determine the table schema
-                # Check if config has get_table_template method (for data with varying schemas)
-                if hasattr(config, 'get_table_template'):
-                    table_schema = config.get_table_template(table_name)
-                elif (
+                # First check if db_template is a dict with table_name as a key (multi-table configs)
+                if (
                     isinstance(config.db_template, dict)
                     and table_name in config.db_template
                 ):
                     table_schema = config.db_template[table_name]
+                elif hasattr(config, 'get_table_template') and callable(config.get_table_template):
+                    table_schema = config.get_table_template(table_name)
+                    if table_schema is None and isinstance(config.db_template, dict):
+                        table_schema = config.db_template
                 else:
-                    # For flat db_template (single table), use the entire template
                     table_schema = config.db_template
 
                 table_success = self.create_table(schema, table_name, table_schema)
