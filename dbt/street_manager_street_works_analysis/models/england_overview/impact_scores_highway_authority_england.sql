@@ -126,45 +126,22 @@ WITH
             uprn_count,
             geometry
     ),
-     -- Calculate metrics to normalise the impact score
-    network_scoring AS (
+    -- Calculate impact at USRN level
+    usrn_impact AS (
         SELECT
-            LOWER(swa_code) as swa_code,
-            total_road_length,
-            traffic_flow_2023,
-            -- Calculate traffic density per km
-            (CAST(traffic_flow_2023 AS FLOAT) /
-             NULLIF(CAST(total_road_length AS FLOAT), 0)) as traffic_density,
+            usrn,
+            street_name,
+            highway_authority,
+            highway_authority_swa_code,
+            uprn_count,
+            geometry,
+            total_impact_level,
 
-            -- Normalise density to 0-1 scale by dividing by max density
-            traffic_density / NULLIF(MAX(traffic_density) OVER (), 0) as network_importance_factor
-        FROM
-            {{ ref('dft_data_joins') }}
-    ),
-    -- Calculate weighted impact at USRN level 
-    usrn_weighted_impact AS (
-        SELECT
-            raw_impact_level.usrn,
-            raw_impact_level.street_name,
-            raw_impact_level.highway_authority,
-            raw_impact_level.highway_authority_swa_code,
-            raw_impact_level.uprn_count,
-            raw_impact_level.geometry,
-            raw_impact_level.total_impact_level,
-            CAST(la_dft_data.total_road_length AS FLOAT) as total_road_length,
-            CAST(la_dft_data.traffic_flow_2023 AS FLOAT) as traffic_flow_2023,
-            network_scoring.traffic_density,
-            network_scoring.network_importance_factor,
-            -- Weighted impact calculation
-            raw_impact_level.total_impact_level * (1 + COALESCE(network_scoring.network_importance_factor, 0)) as weighted_impact_level,
-            
-            -- Normalise to 1-100 scale using min-max normalization
-            PERCENT_RANK() OVER (
-                ORDER BY raw_impact_level.total_impact_level * (1 + COALESCE(network_scoring.network_importance_factor, 0))
-            ) * 100 AS impact_index_score,
-                        
+            -- Normalise to 1-100 scale using percent rank
+            PERCENT_RANK() OVER (ORDER BY total_impact_level) * 100 AS impact_index_score,
+
             -- Create categorical impact levels for easier interpretation
-            CASE 
+            CASE
                 WHEN impact_index_score >= 95 THEN 'Severe'
                 WHEN impact_index_score >= 75 THEN 'High'
                 WHEN impact_index_score >= 50 THEN 'Moderate'
@@ -173,8 +150,6 @@ WITH
             END AS impact_category
         FROM
             raw_impact_level
-            LEFT JOIN {{ ref('dft_data_joins') }} la_dft_data ON raw_impact_level.highway_authority_swa_code = LOWER(la_dft_data.swa_code)
-            LEFT JOIN network_scoring network_scoring ON raw_impact_level.highway_authority_swa_code = network_scoring.swa_code
     ),
     -- Get work category breakdown for additional context
     work_category_breakdown AS (
@@ -197,38 +172,29 @@ WITH
             highway_authority,
             highway_authority_swa_code
     )
--- Aggregate the USRN-level weighted impacts to highway authority level
+-- Aggregate the USRN-level impacts to highway authority level
 SELECT
-    uwi.highway_authority,
-    uwi.highway_authority_swa_code,
-    COUNT(DISTINCT uwi.usrn) as total_usrns_count,
-    AVG(uwi.uprn_count) as avg_uprn_count,
-    SUM(uwi.uprn_count) as total_uprn_count,
-    SUM(uwi.total_impact_level) AS total_impact_level,
-    AVG(uwi.total_impact_level) AS avg_impact_level_per_usrn,
-    MAX(uwi.total_impact_level) AS max_impact_level,
-    MIN(uwi.total_impact_level) AS min_impact_level,
-    SUM(uwi.weighted_impact_level) AS total_weighted_impact_level,
-    AVG(uwi.weighted_impact_level) AS avg_weighted_impact_level,
-    MAX(uwi.weighted_impact_level) AS max_weighted_impact_level,
-    MIN(uwi.weighted_impact_level) AS min_weighted_impact_level,
-    SUM(uwi.impact_index_score) AS total_impact_index_score,
-    AVG(uwi.impact_index_score) AS avg_impact_index_score,
-    -- Normalie total weighted impact to 0-100 scale
-    PERCENT_RANK() OVER (ORDER BY SUM(uwi.weighted_impact_level)) * 100 AS highway_authority_impact_score,
+    ui.highway_authority,
+    ui.highway_authority_swa_code,
+    COUNT(DISTINCT ui.usrn) as total_usrns_count,
+    AVG(ui.uprn_count) as avg_uprn_count,
+    SUM(ui.uprn_count) as total_uprn_count,
+    SUM(ui.total_impact_level) AS total_impact_level,
+    AVG(ui.total_impact_level) AS avg_impact_level_per_usrn,
+    MAX(ui.total_impact_level) AS max_impact_level,
+    MIN(ui.total_impact_level) AS min_impact_level,
+    SUM(ui.impact_index_score) AS total_impact_index_score,
+    AVG(ui.impact_index_score) AS avg_impact_index_score,
+    -- Normalise total impact to 0-100 scale
+    PERCENT_RANK() OVER (ORDER BY SUM(ui.total_impact_level)) * 100 AS highway_authority_impact_score,
     -- Create categorical impact levels based on the normalised score
-    CASE 
+    CASE
         WHEN highway_authority_impact_score >= 95 THEN 'Severe'
         WHEN highway_authority_impact_score >= 75 THEN 'High'
         WHEN highway_authority_impact_score >= 50 THEN 'Moderate'
         WHEN highway_authority_impact_score >= 25 THEN 'Low'
         ELSE 'Minimal'
     END AS impact_category,
-    -- Network characteristics 
-    MAX(uwi.total_road_length) as total_road_length,
-    MAX(uwi.traffic_flow_2023) as traffic_flow_2023,
-    MAX(uwi.traffic_density) as traffic_density,
-    MAX(uwi.network_importance_factor) as network_importance_factor,
     -- Work breakdown
     MAX(wcb.major_works_count) as major_works_count,
     MAX(wcb.standard_works_count) as standard_works_count,
@@ -238,13 +204,13 @@ SELECT
     MAX(wcb.ttro_required_count) as ttro_required_count,
     MAX(wcb.traffic_sensitive_count) as traffic_sensitive_count,
     MAX(wcb.high_impact_traffic_mgmt_count) as high_impact_traffic_mgmt_count,
-    
+
     {{ current_timestamp() }} AS date_processed
 FROM
-    usrn_weighted_impact uwi
-    LEFT JOIN work_category_breakdown wcb ON uwi.highway_authority = wcb.highway_authority 
-        AND uwi.highway_authority_swa_code = wcb.highway_authority_swa_code
+    usrn_impact ui
+    LEFT JOIN work_category_breakdown wcb ON ui.highway_authority = wcb.highway_authority
+        AND ui.highway_authority_swa_code = wcb.highway_authority_swa_code
 GROUP BY
-    uwi.highway_authority,
-    uwi.highway_authority_swa_code
+    ui.highway_authority,
+    ui.highway_authority_swa_code
 ORDER BY highway_authority_impact_score DESC

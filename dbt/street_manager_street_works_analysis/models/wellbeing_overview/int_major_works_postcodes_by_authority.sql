@@ -1,4 +1,4 @@
--- depends_on: {{ ref('stg_works_by_authority') }}
+-- depends_on: {{ ref('stg_major_works_by_authority') }}
 -- depends_on: {{ ref('int_postcodes') }}
 
 {{ config(
@@ -13,7 +13,7 @@
 UNION ALL
   {%- endif %}
   (
-    SELECT 
+    SELECT
       w.permit_reference_number,
       w.easting as work_easting,
       w.northing as work_northing,
@@ -36,7 +36,7 @@ UNION ALL
       cp.male_population,
       cp.total_households,
       ST_Distance(w.work_point, ST_GeomFromText(cp.postcode_point)) as distance_m
-    FROM {{ ref('stg_works_by_authority') }} w
+    FROM {{ ref('stg_major_works_by_authority') }} w
     LEFT JOIN {{ ref('int_postcodes') }} cp
       ON ST_Contains(w.work_buffer_500m, ST_GeomFromText(cp.postcode_point))
     WHERE w.highway_authority = '{{ authority }}'

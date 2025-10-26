@@ -1,7 +1,7 @@
 {% set table_alias = 'emergency_wellbeing_impact' %}
 {{ config(materialized='table', alias=table_alias) }}
 
-SELECT 
+SELECT
     wpm.permit_reference_number,
     w.promoter_organisation,
     w.highway_authority,
@@ -10,9 +10,6 @@ SELECT
     w.work_category,
     w.work_status,
     w.usrn,
-    w.promoter_total_permits,
-    w.promoter_emergency_permits,
-    w.emergency_percentage,
     wpm.work_easting,
     wpm.work_northing,
     wpm.actual_start_date_time,
@@ -23,25 +20,24 @@ SELECT
     SUM(wpm.female_population) as total_female_population,
     SUM(wpm.male_population) as total_male_population,
     SUM(wpm.total_households) as total_households_affected,
-    -- Calculate wellbeing impact: £1.61 × Days × Households_Affected
-    ROUND(1.61 * wpm.duration_days * SUM(wpm.total_households), 2) as wellbeing_total_impact
-FROM {{ ref('int_works_postcodes_by_authority') }} wpm
-JOIN {{ ref('stg_works_by_authority') }} w 
+    -- Calculate wellbeing impact: £2.10 × Days × Households_Affected
+    -- £2.10 represents the uplifted value to 25-26 prices (original was £1.61 in 18/19 prices)
+    -- Uplifted value = £1.61 × (139.08 / 106.43)
+    ROUND(2.10 * wpm.duration_days * SUM(wpm.total_households), 2) as wellbeing_total_impact
+FROM {{ ref('int_emergency_works_postcodes_by_authority') }} wpm
+JOIN {{ ref('stg_emergency_works_by_authority') }} w
     ON wpm.permit_reference_number = w.permit_reference_number
-GROUP BY 
-    wpm.permit_reference_number, 
-    w.promoter_organisation, 
-    w.highway_authority, 
-    w.street_name, 
-    w.activity_type, 
-    w.work_category, 
-    w.work_status, 
-    w.usrn, 
-    w.promoter_total_permits,
-    w.promoter_emergency_permits,
-    w.emergency_percentage,
-    wpm.work_easting, 
-    wpm.work_northing, 
+GROUP BY
+    wpm.permit_reference_number,
+    w.promoter_organisation,
+    w.highway_authority,
+    w.street_name,
+    w.activity_type,
+    w.work_category,
+    w.work_status,
+    w.usrn,
+    wpm.work_easting,
+    wpm.work_northing,
     wpm.actual_start_date_time,
     wpm.actual_end_date_time,
     wpm.duration_days

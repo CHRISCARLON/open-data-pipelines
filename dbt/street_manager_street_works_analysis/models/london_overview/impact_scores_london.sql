@@ -1,5 +1,3 @@
--- depends_on: {{ ref('impact_scores_london_archive') }}
-
 {% set table_alias = 'impact_scores_london_latest' %}
 {{ config(
     materialized='table',
@@ -130,62 +128,36 @@ WITH
             highway_authority_swa_code,
             uprn_count,
             geometry
-    ),
-     -- Calculate metrics to normalise the impact score
-    network_scoring AS (
-        SELECT
-            LOWER(swa_code) as swa_code,
-            total_road_length,
-            traffic_flow_2023,
-            -- Calculate traffic density per km
-            (CAST(traffic_flow_2023 AS FLOAT) /
-             NULLIF(CAST(total_road_length AS FLOAT), 0)) as traffic_density,
-
-            -- Normalise density to 0-1 scale by dividing by max density
-            traffic_density / NULLIF(MAX(traffic_density) OVER (), 0) as network_importance_factor
-        FROM
-            {{ ref('dft_data_joins') }}
     )
 SELECT
-     -- Calculate normalised impact scores to serve as a final metric
-    raw_impact_level.usrn,
-    raw_impact_level.street_name,
-    raw_impact_level.highway_authority,
-    raw_impact_level.highway_authority_swa_code,
-    raw_impact_level.uprn_count,
-    raw_impact_level.geometry,
-    raw_impact_level.total_impact_level,
-    CAST(la_dft_data.total_road_length AS FLOAT) as total_road_length,
-    CAST(la_dft_data.traffic_flow_2023 AS FLOAT) as traffic_flow_2023,
-    network_scoring.traffic_density,
-    network_scoring.network_importance_factor,
-    -- Weighted impact calculation
-    raw_impact_level.total_impact_level * (1 + network_scoring.network_importance_factor) as weighted_impact_level,
+    -- Calculate normalised impact scores to serve as a final metric
+    usrn,
+    street_name,
+    highway_authority,
+    highway_authority_swa_code,
+    uprn_count,
+    geometry,
+    total_impact_level,
 
     -- Normalise to 1-100 scale using min-max normalization
     CASE
-        WHEN MAX(raw_impact_level.total_impact_level * (1 + network_scoring.network_importance_factor)) OVER () =
-             MIN(raw_impact_level.total_impact_level * (1 + network_scoring.network_importance_factor)) OVER ()
+        WHEN MAX(total_impact_level) OVER () = MIN(total_impact_level) OVER ()
         THEN 50.0  -- If all values are the same, assign middle value
         ELSE 1 + (99 *
-            (raw_impact_level.total_impact_level * (1 + network_scoring.network_importance_factor) -
-             MIN(raw_impact_level.total_impact_level * (1 + network_scoring.network_importance_factor)) OVER ()) /
-            NULLIF(MAX(raw_impact_level.total_impact_level * (1 + network_scoring.network_importance_factor)) OVER () -
-                   MIN(raw_impact_level.total_impact_level * (1 + network_scoring.network_importance_factor)) OVER (), 0)
+            (total_impact_level - MIN(total_impact_level) OVER ()) /
+            NULLIF(MAX(total_impact_level) OVER () - MIN(total_impact_level) OVER (), 0)
         )
     END AS impact_index_score,
 
     -- Create categorical impact levels for easier interpretation
     CASE
-        WHEN impact_index_score >= 80 THEN 'Critical'
-        WHEN impact_index_score >= 60 THEN 'High'
-        WHEN impact_index_score >= 40 THEN 'Medium'
-        WHEN impact_index_score >= 20 THEN 'Low'
+        WHEN impact_index_score >= 95 THEN 'Severe'
+        WHEN impact_index_score >= 75 THEN 'High'
+        WHEN impact_index_score >= 50 THEN 'Moderate'
+        WHEN impact_index_score >= 25 THEN 'Low'
         ELSE 'Minimal'
     END AS impact_category,
 
     {{ current_timestamp() }} AS date_processed
 FROM
     raw_impact_level
-    LEFT JOIN {{ ref('dft_data_joins') }} la_dft_data ON raw_impact_level.highway_authority_swa_code = LOWER(la_dft_data.swa_code)
-    LEFT JOIN network_scoring network_scoring ON raw_impact_level.highway_authority_swa_code = network_scoring.swa_code

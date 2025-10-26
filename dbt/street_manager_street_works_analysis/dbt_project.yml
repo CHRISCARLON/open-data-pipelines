@@ -35,13 +35,8 @@ vars:
 
 models:
   street_manager_street_works_analysis:
-    impact_score_archive:
-      impact_scores_england_archive:
-      impact_scores_london_archive:
     uprn_usrn_counts:
       uprn_usrn_count:
-    dft_data:
-      dft_data_joins:
     england_overview:
       completed_list_england:
       in_progress_list_england:
@@ -52,14 +47,12 @@ models:
       in_progress_list_london:
       impact_scores_london:
       usrn_permit_details_london:
-    collab_overview:
-      collab_overview_england:
-    emergency_works:
-      emergency_works_overview_england:
-      stg_works_by_authority:
+    wellbeing_overview:
+      stg_emergency_works_by_authority:
+      stg_major_works_by_authority:
       int_postcodes:
-      int_works_postcodes_by_authority:
+      int_emergency_works_postcodes_by_authority:
+      int_major_works_postcodes_by_authority:
       emergency_wellbeing:
+      major_wellbeing:
       clean_up:
-    new_connections:
-      new_connections_england:
