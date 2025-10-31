@@ -9,18 +9,18 @@ from loguru import logger
 
 def main():
     """
-    Pipeline to process the last 12 months of NHS English Prescriptions data.
-    This creates/updates the prescribing schema and loads data for the most recent 12 months.
+    Pipeline to process the last 6 months of NHS English Prescriptions data.
+    This creates/updates the prescribing schema and loads data for the most recent 6 months.
     """
     if not (token := os.getenv("MOTHERDUCK_TOKEN")) or not (
         database := os.getenv("MOTHERDB_2")
     ):
         raise ValueError("MOTHERDUCK_TOKEN and MOTHERDB_2 must be set")
 
-    # Configure for last 12 months
-    config = NHSEnglishPrescriptions.create_last_n_months(12)
+    # Configure for last 6 months
+    config = NHSEnglishPrescriptions.create_last_n_months(6)
 
-    logger.info(f"Processing last 12 months of NHS prescriptions data")
+    logger.info("Processing last 6 months of NHS prescriptions data")
     logger.info(f"Schema: {config.schema_name}")
     logger.info(f"Tables to process: {len(config.table_names)}")
     logger.info(f"Table names: {', '.join(config.table_names)}")
@@ -36,7 +36,9 @@ def main():
         logger.info(f"Schema: {config.schema_name}")
         logger.info(f"Tables ready: {', '.join(config.table_names)}")
 
-        logger.info("Starting NHS English Prescriptions data processing (last 12 months)...")
+        logger.info(
+            "Starting NHS English Prescriptions data processing (last 6 months)..."
+        )
 
         process_nhs_prescriptions(
             download_links=config.download_links,
@@ -48,7 +50,9 @@ def main():
             config=config,
         )
 
-        logger.success("NHS English Prescriptions (last 12 months) pipeline completed successfully!")
+        logger.success(
+            "NHS English Prescriptions (last 6 months) pipeline completed successfully!"
+        )
         logger.info(f"Processed {len(config.table_names)} months of data")
         logger.info(f"All data stored in schema: {config.schema_name}")
 

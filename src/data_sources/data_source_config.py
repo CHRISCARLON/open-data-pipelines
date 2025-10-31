@@ -89,8 +89,11 @@ class DataSourceType(Enum):
         "https://www.arcgis.com/sharing/rest/content/items/2410f94375674cd2a6182b4f5e531bb8/data",
     )
     ONSUprnDirectory = ("ons_uprn_directory", "https://geoportal.statistics.gov.uk")
-    DftRoadStats=("dft_road_stats", "https://www.gov.uk/government/statistical-data-sets/road-length-statistics-rdl")
-    
+    DftRoadStats = (
+        "dft_road_stats",
+        "https://www.gov.uk/government/statistical-data-sets/road-length-statistics-rdl",
+    )
+
     def __init__(self, code: str, base_url: str):
         self._code = code
         self._base_url = base_url

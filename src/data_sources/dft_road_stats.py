@@ -72,14 +72,23 @@ class DftRoadStats(DataSourceConfig):
                 "2023": "https://assets.publishing.service.gov.uk/media/67b5abf94e79a175a4c2feb5/2023.zip",
                 "2022": "https://assets.publishing.service.gov.uk/media/67b5ac103e77ca8b737d3878/2022.zip",
                 "2021": "https://assets.publishing.service.gov.uk/media/67b5ac24423f67c0e67d387a/2021.zip",
-                "pre_2021": "https://assets.publishing.service.gov.uk/media/67b5adad423f67c0e67d387b/pre-2021-tables.zip"
+                "pre_2021": "https://assets.publishing.service.gov.uk/media/67b5adad423f67c0e67d387b/pre-2021-tables.zip",
             }
-            logger.success(f"Using historic RDL download links ({len(historic_links)} files)")
+            logger.success(
+                f"Using historic RDL download links ({len(historic_links)} files)"
+            )
             self._cached_download_links = historic_links
             return self._cached_download_links
 
         # Handle latest data by scraping the website
-        target_files = ["rdl0101", "rdl0102", "rdl0103", "rdl0201", "rdl0202", "rdl0203"]
+        target_files = [
+            "rdl0101",
+            "rdl0102",
+            "rdl0103",
+            "rdl0201",
+            "rdl0202",
+            "rdl0203",
+        ]
 
         try:
             response = requests.get(self.base_url)
@@ -213,7 +222,7 @@ class DftRoadStats(DataSourceConfig):
         Returns:
             The appropriate database template
         """
-        if table_name.lower() in ['rdl0102', 'rdl0202']:
+        if table_name.lower() in ["rdl0102", "rdl0202"]:
             return self.get_local_authority_template()
         else:
             return self.get_region_template()
@@ -310,7 +319,7 @@ if __name__ == "__main__":
     config_latest = DftRoadStats.create_default_latest()
     print(config_latest)
     print(f"\nTable names: {config_latest.table_names}")
-    print(f"Download links:")
+    print("Download links:")
     for name, url in config_latest.download_links.items():
         print(f"  {name}: {url}")
 
@@ -318,6 +327,6 @@ if __name__ == "__main__":
     config_historic = DftRoadStats.create_default_historic()
     print(config_historic)
     print(f"\nTable names: {config_historic.table_names}")
-    print(f"Download links:")
+    print("Download links:")
     for name, url in config_historic.download_links.items():
         print(f"  {name}: {url}")

@@ -9,7 +9,9 @@ from ..data_processors.utils.metadata_logger import metadata_tracker
 from ..data_sources.data_source_config import DataSourceConfig
 
 
-def insert_into_motherduck(arrow_table: pa.Table, conn, schema: str, table: str) -> bool:
+def insert_into_motherduck(
+    arrow_table: pa.Table, conn, schema: str, table: str
+) -> bool:
     """
     Insert Arrow Table into MotherDuck with retry logic.
 
@@ -32,7 +34,9 @@ def insert_into_motherduck(arrow_table: pa.Table, conn, schema: str, table: str)
     for attempt in range(max_retries):
         try:
             conn.register("temp_arrow", arrow_table)
-            insert_sql = f"""INSERT INTO "{schema}"."{table}" SELECT * FROM temp_arrow"""
+            insert_sql = (
+                f"""INSERT INTO "{schema}"."{table}" SELECT * FROM temp_arrow"""
+            )
             conn.execute(insert_sql)
 
             if attempt > 0:
@@ -199,8 +203,7 @@ def stream_csv_from_url(
                     if len(values) == len(header):
                         # Convert all values to strings, handle empty/None
                         string_values = [
-                            str(v) if v and v.strip() else None
-                            for v in values
+                            str(v) if v and v.strip() else None for v in values
                         ]
                         row_dict = dict(zip(header, string_values))
                         row_buffer.append(row_dict)
@@ -259,7 +262,9 @@ def process_streaming_csv(
         logger.info(f"Starting streaming process for {url}")
 
         # Process streamed batches
-        for arrow_batch in stream_csv_from_url(url, batch_size, expected_columns, tracker):
+        for arrow_batch in stream_csv_from_url(
+            url, batch_size, expected_columns, tracker
+        ):
             batch_count += 1
             batch_rows = len(arrow_batch)
 

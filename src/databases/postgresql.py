@@ -125,7 +125,7 @@ class PostgreSQLManager(DatabaseProtocolTrait):
             try:
                 # Determine the table schema
                 # Check if config has get_table_template method (for data with varying schemas)
-                if hasattr(config, 'get_table_template'):
+                if hasattr(config, "get_table_template"):
                     table_schema = config.get_table_template(table_name)
                 elif (
                     isinstance(config.db_template, dict)

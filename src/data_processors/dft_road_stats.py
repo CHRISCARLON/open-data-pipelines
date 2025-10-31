@@ -37,7 +37,9 @@ def stream_file_from_url(url: str) -> Iterator[bytes]:
         raise
 
 
-def read_ods_file(file_path: str, sheet_name: Optional[str] = None, header_row: int = 6) -> pd.DataFrame:
+def read_ods_file(
+    file_path: str, sheet_name: Optional[str] = None, header_row: int = 6
+) -> pd.DataFrame:
     """
     Read ODS file into a pandas DataFrame.
 
@@ -56,12 +58,16 @@ def read_ods_file(file_path: str, sheet_name: Optional[str] = None, header_row: 
         logger.info(f"Using sheet: {selected_sheet}, header row: {header_row}")
 
         # DFT Road Stats files have headers at different rows depending on the file
-        result = pd.read_excel(file_path, sheet_name=selected_sheet, engine="odf", header=header_row)
+        result = pd.read_excel(
+            file_path, sheet_name=selected_sheet, engine="odf", header=header_row
+        )
 
         if not isinstance(result, pd.DataFrame):
             raise TypeError(f"Expected DataFrame, got {type(result)}")
 
-        logger.success(f"Read {len(result):,} rows and {len(result.columns)} columns from ODS file")
+        logger.success(
+            f"Read {len(result):,} rows and {len(result.columns)} columns from ODS file"
+        )
         return result
 
     except Exception as e:
@@ -132,7 +138,9 @@ def process_ods_file(
 
         total_rows = len(df_clean)
         logger.info(f"Processing {total_rows:,} rows in batches of {batch_size}")
-        logger.info(f"DataFrame columns ({len(df_clean.columns)}): {list(df_clean.columns)}")
+        logger.info(
+            f"DataFrame columns ({len(df_clean.columns)}): {list(df_clean.columns)}"
+        )
 
         if tracker:
             tracker.set_rows_processed(total_rows)
@@ -150,7 +158,9 @@ def process_ods_file(
             rows_processed += len(batch)
             logger.info(f"Processed {rows_processed:,}/{total_rows:,} rows")
 
-        logger.success(f"Successfully processed {table_name} with {rows_processed:,} rows")
+        logger.success(
+            f"Successfully processed {table_name} with {rows_processed:,} rows"
+        )
         return rows_processed
 
     except Exception as e:
@@ -190,7 +200,9 @@ def process_single_ods_file(
                 tracker.add_info("file_format", "ods")
                 tracker.add_info("url", url)
 
-                with tempfile.NamedTemporaryFile(suffix=".ods", delete=False) as tmp_file:
+                with tempfile.NamedTemporaryFile(
+                    suffix=".ods", delete=False
+                ) as tmp_file:
                     total_bytes = 0
                     for chunk in stream_file_from_url(url):
                         tmp_file.write(chunk)
@@ -202,7 +214,14 @@ def process_single_ods_file(
 
                 try:
                     rows_processed = process_ods_file(
-                        tmp_path, conn, schema_name, table_name, batch_size, tracker, sheet_name, header_row
+                        tmp_path,
+                        conn,
+                        schema_name,
+                        table_name,
+                        batch_size,
+                        tracker,
+                        sheet_name,
+                        header_row,
                     )
                     return rows_processed
                 finally:
@@ -220,7 +239,16 @@ def process_single_ods_file(
             tmp_path = tmp_file.name
 
         try:
-            return process_ods_file(tmp_path, conn, schema_name, table_name, batch_size, None, sheet_name, header_row)
+            return process_ods_file(
+                tmp_path,
+                conn,
+                schema_name,
+                table_name,
+                batch_size,
+                None,
+                sheet_name,
+                header_row,
+            )
         finally:
             if os.path.exists(tmp_path):
                 os.remove(tmp_path)
@@ -297,7 +325,12 @@ def process_zip_with_ods_files(
                         logger.info(f"Processing {base_name} -> {table_name}")
 
                         rows = process_ods_file(
-                            temp_ods_path, conn, schema_name, table_name, batch_size, tracker
+                            temp_ods_path,
+                            conn,
+                            schema_name,
+                            table_name,
+                            batch_size,
+                            tracker,
                         )
                         results[table_name] = rows
 
@@ -324,7 +357,9 @@ def process_zip_with_ods_files(
                 stream_unzip(zipped_chunks), desc="Extracting ZIP"
             ):
                 file_name_str = (
-                    file_name.decode("utf-8") if isinstance(file_name, bytes) else file_name
+                    file_name.decode("utf-8")
+                    if isinstance(file_name, bytes)
+                    else file_name
                 )
 
                 if not file_name_str.endswith(".ods"):
@@ -340,7 +375,9 @@ def process_zip_with_ods_files(
                 base_name = os.path.splitext(os.path.basename(file_name_str))[0]
                 table_name = f"{table_prefix}_{base_name}".lower()
 
-                rows = process_ods_file(temp_ods_path, conn, schema_name, table_name, batch_size)
+                rows = process_ods_file(
+                    temp_ods_path, conn, schema_name, table_name, batch_size
+                )
                 results[table_name] = rows
 
     return results
@@ -386,7 +423,14 @@ def process_dft_road_stats(
                 )
             elif url.endswith(".ods"):
                 rows = process_single_ods_file(
-                    url, conn, schema_name, file_code, batch_size, config, sheet_name, header_row
+                    url,
+                    conn,
+                    schema_name,
+                    file_code,
+                    batch_size,
+                    config,
+                    sheet_name,
+                    header_row,
                 )
                 logger.success(f"Completed {file_code}: {rows:,} rows")
             else:

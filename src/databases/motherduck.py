@@ -146,7 +146,9 @@ class MotherDuckManager(DatabaseProtocolTrait):
                     and table_name in config.db_template
                 ):
                     table_schema = config.db_template[table_name]
-                elif hasattr(config, 'get_table_template') and callable(config.get_table_template):
+                elif hasattr(config, "get_table_template") and callable(
+                    config.get_table_template
+                ):
                     table_schema = config.get_table_template(table_name)
                     if table_schema is None and isinstance(config.db_template, dict):
                         table_schema = config.db_template

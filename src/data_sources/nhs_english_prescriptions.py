@@ -75,7 +75,8 @@ class NHSEnglishPrescriptions(DataSourceConfig):
             resources = data.get("result", {}).get("resources", [])
 
             filtered_resources = [
-                r for r in resources
+                r
+                for r in resources
                 if r.get("format") == "CSV"
                 and r.get("name", "").startswith("EPD_SNOMED_")
             ]
@@ -88,7 +89,9 @@ class NHSEnglishPrescriptions(DataSourceConfig):
         except requests.RequestException as e:
             raise RuntimeError(f"Failed to fetch NHS prescribing data resources: {e}")
         except (KeyError, ValueError) as e:
-            raise RuntimeError(f"Failed to parse NHS prescribing data API response: {e}")
+            raise RuntimeError(
+                f"Failed to parse NHS prescribing data API response: {e}"
+            )
 
     @property
     def download_links(self) -> list[str]:
@@ -109,7 +112,7 @@ class NHSEnglishPrescriptions(DataSourceConfig):
             selected_resources = resources[:1]
         else:  # HISTORIC
             if self.max_months:
-                selected_resources = resources[:self.max_months]
+                selected_resources = resources[: self.max_months]
             else:
                 selected_resources = resources
 
@@ -204,7 +207,7 @@ class NHSEnglishPrescriptions(DataSourceConfig):
             selected_resources = resources[:1]
         else:  # HISTORIC
             if self.max_months:
-                selected_resources = resources[:self.max_months]
+                selected_resources = resources[: self.max_months]
             else:
                 selected_resources = resources
 

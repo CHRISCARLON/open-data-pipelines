@@ -14,7 +14,7 @@ def main():
     This creates the dft_road_stats schema, tables, and loads the data.
 
     Processes only specified data.
-"""
+    """
     if not (token := os.getenv("MOTHERDUCK_TOKEN")) or not (
         database := os.getenv("MOTHERDB")
     ):
@@ -43,7 +43,9 @@ def main():
             logger.info(f"Available files: {list(all_links.keys())}")
             return
 
-        logger.info(f"Processing {len(filtered_links)} files: {list(filtered_links.keys())}")
+        logger.info(
+            f"Processing {len(filtered_links)} files: {list(filtered_links.keys())}"
+        )
 
         # Define sheet names for each file code
         sheet_names = {
