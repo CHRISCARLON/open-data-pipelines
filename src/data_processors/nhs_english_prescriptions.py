@@ -1,5 +1,5 @@
 import csv
-import pandas as pd
+import pyarrow as pa
 from typing import Iterator, List, Dict, Tuple, Optional
 import requests
 from loguru import logger
@@ -9,12 +9,12 @@ from ..data_processors.utils.metadata_logger import metadata_tracker
 from ..data_sources.data_source_config import DataSourceConfig
 
 
-def insert_into_motherduck(df: pd.DataFrame, conn, schema: str, table: str) -> bool:
+def insert_into_motherduck(arrow_table: pa.Table, conn, schema: str, table: str) -> bool:
     """
-    Insert DataFrame into MotherDuck with retry logic.
+    Insert Arrow Table into MotherDuck with retry logic.
 
     Args:
-        df: DataFrame to insert
+        arrow_table: Arrow Table to insert
         conn: Database connection
         schema: Database schema name
         table: Table name
@@ -31,8 +31,8 @@ def insert_into_motherduck(df: pd.DataFrame, conn, schema: str, table: str) -> b
 
     for attempt in range(max_retries):
         try:
-            conn.register("temp_df", df)
-            insert_sql = f"""INSERT INTO "{schema}"."{table}" SELECT * FROM temp_df"""
+            conn.register("temp_arrow", arrow_table)
+            insert_sql = f"""INSERT INTO "{schema}"."{table}" SELECT * FROM temp_arrow"""
             conn.execute(insert_sql)
 
             if attempt > 0:
@@ -41,7 +41,10 @@ def insert_into_motherduck(df: pd.DataFrame, conn, schema: str, table: str) -> b
             return True
 
         except Exception as e:
-            conn.unregister("temp_df")
+            try:
+                conn.unregister("temp_arrow")
+            except Exception:
+                pass
 
             if attempt < max_retries - 1:
                 wait_time = (2**attempt) * base_delay
@@ -53,7 +56,7 @@ def insert_into_motherduck(df: pd.DataFrame, conn, schema: str, table: str) -> b
                 raise
         finally:
             try:
-                conn.unregister("temp_df")
+                conn.unregister("temp_arrow")
             except Exception:
                 pass
 
@@ -89,56 +92,15 @@ def validate_column_names(
     return len(issues) == 0, issues
 
 
-def clean_dataframe_for_motherduck(
-    df: pd.DataFrame, expected_columns: Dict[str, str]
-) -> pd.DataFrame:
-    """
-    Clean DataFrame to handle data type issues for MotherDuck insertion.
-
-    Args:
-        df: DataFrame to clean
-        expected_columns: Dict of column names and their expected types
-
-    Returns:
-        Cleaned DataFrame
-    """
-    # TODO: This is a hack to get the data into MotherDuck.
-    # We need to find a better way to do this.
-    df_clean = df.copy()
-
-    # Define numeric columns that need special handling
-    numeric_columns = {
-        col: dtype
-        for col, dtype in expected_columns.items()
-        if dtype in ["BIGINT", "DOUBLE", "INTEGER"]
-    }
-
-    for col, dtype in numeric_columns.items():
-        if col in df_clean.columns:
-            df_clean[col] = df_clean[col].replace(["", "nan", "NaN", "null"], None)
-
-            if dtype == "BIGINT":
-                # Convert to numeric first, then to nullable integer
-                numeric_series = pd.to_numeric(df_clean[col], errors="coerce")
-                df_clean[col] = pd.Series(numeric_series).astype("Int64")
-            elif dtype == "DOUBLE":
-                df_clean[col] = pd.to_numeric(df_clean[col], errors="coerce")
-
-    string_columns = [col for col in df_clean.columns if col not in numeric_columns]
-    for col in string_columns:
-        df_clean[col] = df_clean[col].astype(str).replace(["nan", "NaN", "null"], None)
-
-    return df_clean
-
-
 def stream_csv_from_url(
     csv_url: str,
     batch_size: int,
     expected_columns: Optional[Dict[str, str]] = None,
     tracker=None,
-) -> Iterator[pd.DataFrame]:
+) -> Iterator[pa.Table]:
     """
     Stream CSV data directly from a URL with optional column validation.
+    All data is converted to strings for simplicity and consistency.
 
     Args:
         csv_url: URL of the CSV file
@@ -146,7 +108,7 @@ def stream_csv_from_url(
         expected_columns: Dict of expected column names and types for validation
 
     Yields:
-        DataFrames containing batch_size rows
+        Arrow Tables containing batch_size rows (all columns as strings)
     """
     try:
         logger.info(f"Starting CSV stream from {csv_url}")
@@ -207,16 +169,18 @@ def stream_csv_from_url(
                             try:
                                 values = next(csv.reader([line]))
                                 if len(values) == len(header):
-                                    row_dict = dict(zip(header, values))
+                                    # Convert all values to strings, handle empty/None
+                                    string_values = [
+                                        str(v) if v and v.strip() else None
+                                        for v in values
+                                    ]
+                                    row_dict = dict(zip(header, string_values))
                                     row_buffer.append(row_dict)
 
                                     if len(row_buffer) >= batch_size:
-                                        df_batch = pd.DataFrame(row_buffer)
-                                        if expected_columns:
-                                            df_batch = clean_dataframe_for_motherduck(
-                                                df_batch, expected_columns
-                                            )
-                                        yield df_batch
+                                        # Create Arrow table with all string columns
+                                        arrow_table = pa.Table.from_pylist(row_buffer)
+                                        yield arrow_table
                                         row_buffer = []
                                         logger.debug(
                                             f"Yielded batch of {batch_size} rows"
@@ -233,18 +197,20 @@ def stream_csv_from_url(
                 try:
                     values = next(csv.reader([partial_line]))
                     if len(values) == len(header):
-                        row_dict = dict(zip(header, values))
+                        # Convert all values to strings, handle empty/None
+                        string_values = [
+                            str(v) if v and v.strip() else None
+                            for v in values
+                        ]
+                        row_dict = dict(zip(header, string_values))
                         row_buffer.append(row_dict)
                 except csv.Error:
                     pass
 
             if row_buffer:
-                df_batch = pd.DataFrame(row_buffer)
-                if expected_columns:
-                    df_batch = clean_dataframe_for_motherduck(
-                        df_batch, expected_columns
-                    )
-                yield df_batch
+                # Create Arrow table with all string columns
+                arrow_table = pa.Table.from_pylist(row_buffer)
+                yield arrow_table
                 logger.debug(f"Yielded final batch of {len(row_buffer)} rows")
 
     except Exception as e:
@@ -293,12 +259,12 @@ def process_streaming_csv(
         logger.info(f"Starting streaming process for {url}")
 
         # Process streamed batches
-        for df_batch in stream_csv_from_url(url, batch_size, expected_columns, tracker):
+        for arrow_batch in stream_csv_from_url(url, batch_size, expected_columns, tracker):
             batch_count += 1
-            batch_rows = len(df_batch)
+            batch_rows = len(arrow_batch)
 
             try:
-                insert_into_motherduck(df_batch, conn, schema_name, table_name)
+                insert_into_motherduck(arrow_batch, conn, schema_name, table_name)
 
                 total_rows += batch_rows
                 logger.info(
@@ -341,95 +307,6 @@ def process_streaming_csv(
                 logger.error(f"... and {len(errors) - 5} more errors")
 
 
-def create_aggregated_table(
-    conn,
-    schema_name: str,
-    staging_table: str,
-    final_table: str,
-    drop_staging: bool = True,
-) -> int:
-    """
-    Create aggregated table from staging table and optionally drop staging.
-
-    Args:
-        conn: Database connection
-        schema_name: Schema name
-        staging_table: Name of staging table with raw data
-        final_table: Name of final aggregated table
-        drop_staging: Whether to drop staging table after aggregation
-
-    Returns:
-        Number of rows in the aggregated table
-    """
-    try:
-        logger.info(f"Creating aggregated table {final_table} from {staging_table}")
-
-        aggregate_sql = f"""
-        CREATE OR REPLACE TABLE "{schema_name}"."{final_table}" AS
-        SELECT 
-            POSTCODE,
-            BNF_PRESENTATION_NAME,
-            BNF_CHEMICAL_SUBSTANCE,
-            BNF_CHEMICAL_SUBSTANCE_CODE,
-            BNF_PRESENTATION_CODE,
-            BNF_CHAPTER_PLUS_CODE,
-            YEAR_MONTH,
-            REGIONAL_OFFICE_NAME,
-            REGIONAL_OFFICE_CODE,
-            ICB_NAME,
-            ICB_CODE,
-            PCO_NAME,
-            PCO_CODE,
-            SNOMED_CODE,
-            SUM(QUANTITY) as TOTAL_QUANTITY_SUM,
-            SUM(ITEMS) as TOTAL_ITEMS,
-            SUM(ADQ_USAGE) as TOTAL_ADQ_USAGE,
-            SUM(NIC) as TOTAL_NIC,
-            SUM(ACTUAL_COST) as TOTAL_ACTUAL_COST,
-            COUNT(*) as PRESCRIPTION_COUNT
-        FROM "{schema_name}"."{staging_table}"
-        GROUP BY
-            POSTCODE,
-            BNF_PRESENTATION_NAME,
-            BNF_CHEMICAL_SUBSTANCE,
-            BNF_CHEMICAL_SUBSTANCE_CODE,
-            BNF_PRESENTATION_CODE,
-            BNF_CHAPTER_PLUS_CODE,
-            YEAR_MONTH,
-            REGIONAL_OFFICE_NAME,
-            REGIONAL_OFFICE_CODE,
-            ICB_NAME,
-            ICB_CODE,
-            PCO_NAME,
-            PCO_CODE,
-            SNOMED_CODE
-        """
-
-        conn.execute(aggregate_sql)
-
-        staging_count = conn.execute(
-            f'SELECT COUNT(*) FROM "{schema_name}"."{staging_table}"'
-        ).fetchone()[0]
-        final_count = conn.execute(
-            f'SELECT COUNT(*) FROM "{schema_name}"."{final_table}"'
-        ).fetchone()[0]
-
-        logger.success(
-            f"Aggregated {staging_count:,} raw records into {final_count:,} grouped records"
-        )
-
-        if drop_staging:
-            logger.info(f"Dropping staging table {staging_table}")
-            conn.execute(f'DROP TABLE IF EXISTS "{schema_name}"."{staging_table}"')
-            logger.success(f"Staging table {staging_table} dropped")
-
-        return final_count
-
-    except Exception as e:
-        logger.error(f"Error creating aggregated table: {e}")
-        raise
-
-
 def process_nhs_prescriptions(
     download_links: List[str],
     table_names: List[str],
@@ -437,29 +314,25 @@ def process_nhs_prescriptions(
     conn,
     schema_name: str,
     expected_columns: Optional[Dict[str, str]] = None,
-    create_aggregated: bool = True,
-    drop_staging: bool = True,
     config: Optional[DataSourceConfig] = None,
 ) -> None:
     """
-    Process NHS English Prescriptions CSV files with optional aggregation and metadata tracking.
+    Process NHS English Prescriptions CSV files with metadata tracking.
 
     Args:
         download_links: List of CSV URLs
-        table_names: List of table names (will be used as staging table names)
+        table_names: List of table names
         batch_size: Batch size for processing
         conn: Database connection
         schema_name: Schema name
         expected_columns: Dict of expected column names and types for validation
-        create_aggregated: Whether to create aggregated tables
-        drop_staging: Whether to drop staging tables after aggregation
         config: Data source configuration (enables metadata logging if provided)
     """
     if len(download_links) != len(table_names):
         raise ValueError("Number of download links must match number of table names")
 
-    for csv_url, staging_table_name in zip(download_links, table_names):
-        logger.info(f"Processing {staging_table_name} from {csv_url}")
+    for csv_url, table_name in zip(download_links, table_names):
+        logger.info(f"Processing {table_name} from {csv_url}")
 
         if config:
             with metadata_tracker(config, conn, csv_url) as tracker:
@@ -469,7 +342,7 @@ def process_nhs_prescriptions(
                         batch_size=batch_size,
                         conn=conn,
                         schema_name=schema_name,
-                        table_name=staging_table_name,
+                        table_name=table_name,
                         expected_columns=expected_columns,
                         tracker=tracker,
                     )
@@ -477,34 +350,13 @@ def process_nhs_prescriptions(
                     tracker.set_rows_processed(total_rows)
                     tracker.set_file_size(file_size)
                     tracker.add_info("batch_size", batch_size)
-                    tracker.add_info("staging_table", staging_table_name)
+                    tracker.add_info("table_name", table_name)
                     tracker.add_info("file_format", "csv")
 
-                    if create_aggregated:
-                        final_table_name = f"{staging_table_name}_aggregated"
-                        aggregated_table = create_aggregated_table(
-                            conn=conn,
-                            schema_name=schema_name,
-                            staging_table=staging_table_name,
-                            final_table=final_table_name,
-                            drop_staging=drop_staging,
-                        )
-
-                        tracker.add_info("aggregated_table", final_table_name)
-                        tracker.add_info("aggregated_rows", aggregated_table)
-                        tracker.add_info("staging_dropped", drop_staging)
-
-                        logger.success(
-                            f"Completed processing with final aggregated table: {final_table_name}"
-                        )
-                    else:
-                        tracker.add_info("aggregated_table", None)
-                        logger.success(
-                            f"Completed processing with staging table: {staging_table_name}"
-                        )
+                    logger.success(f"Completed processing table: {table_name}")
 
                 except Exception as e:
-                    logger.error(f"Failed to process {staging_table_name}: {e}")
+                    logger.error(f"Failed to process {table_name}: {e}")
                     raise
         else:
             logger.warning("No config provided - metadata logging disabled")
@@ -514,27 +366,12 @@ def process_nhs_prescriptions(
                     batch_size=batch_size,
                     conn=conn,
                     schema_name=schema_name,
-                    table_name=staging_table_name,
+                    table_name=table_name,
                     expected_columns=expected_columns,
                 )
 
-                if create_aggregated:
-                    final_table_name = f"{staging_table_name}_aggregated"
-                    create_aggregated_table(
-                        conn=conn,
-                        schema_name=schema_name,
-                        staging_table=staging_table_name,
-                        final_table=final_table_name,
-                        drop_staging=drop_staging,
-                    )
-                    logger.success(
-                        f"Completed processing with final aggregated table: {final_table_name}"
-                    )
-                else:
-                    logger.success(
-                        f"Completed processing with staging table: {staging_table_name}"
-                    )
+                logger.success(f"Completed processing table: {table_name}")
 
             except Exception as e:
-                logger.error(f"Failed to process {staging_table_name}: {e}")
+                logger.error(f"Failed to process {table_name}: {e}")
                 continue

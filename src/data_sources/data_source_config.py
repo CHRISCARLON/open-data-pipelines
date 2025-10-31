@@ -62,7 +62,7 @@ class DataSourceType(Enum):
     )
     NHS_ENGLISH_PRESCRIBING_DATA = (
         "nhs_english_prescribing_data",
-        "https://opendata.nhsbsa.net/dataset/906115a6-4155-44be-8b81-f8e83cebfb84/resource/ea287041-1027-4062-9db9-040f48223b13/download/epd_snomed_202503.csv",
+        "https://opendata.nhsbsa.net/api/3/action/package_show?id=english-prescribing-dataset-epd-with-snomed-code",
     )
     NAPTAN = (
         "naptan_data",

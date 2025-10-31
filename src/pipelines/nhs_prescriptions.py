@@ -9,15 +9,21 @@ from loguru import logger
 
 def main():
     """
-    Pipeline to set up NHS English Prescriptions database schema and process CSV data.
-    This creates the prescribing schema, tables, and loads the aggregated data.
+    Pipeline to process the last 12 months of NHS English Prescriptions data.
+    This creates/updates the prescribing schema and loads data for the most recent 12 months.
     """
     if not (token := os.getenv("MOTHERDUCK_TOKEN")) or not (
         database := os.getenv("MOTHERDB_2")
     ):
-        raise ValueError("MOTHERDUCK_TOKEN and MOTHERDB must be set")
+        raise ValueError("MOTHERDUCK_TOKEN and MOTHERDB_2 must be set")
 
-    config = NHSEnglishPrescriptions.create_default()
+    # Configure for last 12 months
+    config = NHSEnglishPrescriptions.create_last_n_months(12)
+
+    logger.info(f"Processing last 12 months of NHS prescriptions data")
+    logger.info(f"Schema: {config.schema_name}")
+    logger.info(f"Tables to process: {len(config.table_names)}")
+    logger.info(f"Table names: {', '.join(config.table_names)}")
 
     with MotherDuckManager(token, database) as db_manager:
         logger.info("Setting up NHS English Prescriptions database schema...")
@@ -27,10 +33,10 @@ def main():
         ensure_metadata_schema_exists(config, db_manager)
 
         logger.success("NHS English Prescriptions schema setup complete!")
-        logger.info(f"Created schema: {config.schema_name}")
-        logger.info(f"Created tables: {', '.join(config.table_names)}")
+        logger.info(f"Schema: {config.schema_name}")
+        logger.info(f"Tables ready: {', '.join(config.table_names)}")
 
-        logger.info("Starting NHS English Prescriptions data processing...")
+        logger.info("Starting NHS English Prescriptions data processing (last 12 months)...")
 
         process_nhs_prescriptions(
             download_links=config.download_links,
@@ -39,12 +45,12 @@ def main():
             conn=db_manager.connection,
             schema_name=config.schema_name,
             expected_columns=config.db_template,
-            create_aggregated=True,
-            drop_staging=True,
             config=config,
         )
 
-        logger.success("NHS English Prescriptions pipeline completed successfully!")
+        logger.success("NHS English Prescriptions (last 12 months) pipeline completed successfully!")
+        logger.info(f"Processed {len(config.table_names)} months of data")
+        logger.info(f"All data stored in schema: {config.schema_name}")
 
 
 if __name__ == "__main__":
