@@ -17,7 +17,7 @@ def main():
         raise ValueError("MOTHERDUCK_TOKEN and MOTHERDB_2 must be set")
 
     START_MONTH = "202408"  
-    END_MONTH = "202502"    
+    END_MONTH = "202412"    
 
     config = NHSEnglishPrescriptions.create_date_range(START_MONTH, END_MONTH)
 
