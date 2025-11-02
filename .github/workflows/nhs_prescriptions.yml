@@ -2,8 +2,11 @@ name: NHS Prescriptions
 
 on:
   push:
-    branches:
-      - main
+    paths:
+      - 'src/pipelines/nhs_prescriptions_custom_range.py'
+      - 'src/data_sources/nhs_english_prescriptions.py'
+      - 'src/data_processors/nhs_english_prescriptions.py'
+  workflow_dispatch:
 
 jobs:
   run-pipeline:
@@ -25,7 +28,7 @@ jobs:
         run: uv sync --no-cache
 
       - name: Run nhs prescriptions pipeline
-        run: uv run -m src.pipelines.nhs_prescriptions
+        run: uv run -m src.pipelines.nhs_prescriptions_custom_range
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
           MOTHERDB_2: ${{ secrets.MOTHERDB_2 }}

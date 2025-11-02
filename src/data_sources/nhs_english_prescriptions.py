@@ -20,6 +20,8 @@ class NHSEnglishPrescriptions(DataSourceConfig):
         time_range: TimeRange,
         batch_limit: Optional[int] = None,
         max_months: Optional[int] = None,
+        start_month: Optional[str] = None,
+        end_month: Optional[str] = None,
     ):
         """
         Initialise NHS English Prescribing configuration.
@@ -29,11 +31,15 @@ class NHSEnglishPrescriptions(DataSourceConfig):
             time_range: The time range for the data (LATEST for most recent, HISTORIC for all)
             batch_limit: Optional limit for batch processing
             max_months: Optional limit on number of months to process (for HISTORIC)
+            start_month: Optional start month in YYYYMM format (e.g., "202402")
+            end_month: Optional end month in YYYYMM format (e.g., "202407")
         """
         self._processor_type = processor_type
         self._time_range = time_range
         self.batch_limit = batch_limit
         self.max_months = max_months
+        self.start_month = start_month
+        self.end_month = end_month
         self._source_type = DataSourceType.NHS_ENGLISH_PRESCRIBING_DATA
         self._resources_cache: Optional[List[Dict[str, Any]]] = None
 
@@ -102,13 +108,25 @@ class NHSEnglishPrescriptions(DataSourceConfig):
             List of download URLs based on time_range setting:
             - LATEST: Only the most recent dataset
             - HISTORIC: All available datasets (or limited by max_months)
+            - If start_month and end_month are set, filters to that date range
         """
         resources = self._fetch_api_resources()
 
         if not resources:
             raise ValueError("No NHS prescribing data resources available from API")
 
-        if self.time_range == TimeRange.LATEST:
+        # Filter by date range if specified
+        if self.start_month and self.end_month:
+            filtered_resources = []
+            for r in resources:
+                name = r.get("name", "")
+                if name.startswith("EPD_SNOMED_") and len(name) >= 17:
+                    date_str = name[11:17]  # Extract YYYYMM
+                    if len(date_str) == 6 and date_str.isdigit():
+                        if self.start_month <= date_str <= self.end_month:
+                            filtered_resources.append(r)
+            selected_resources = filtered_resources
+        elif self.time_range == TimeRange.LATEST:
             selected_resources = resources[:1]
         else:  # HISTORIC
             if self.max_months:
@@ -197,13 +215,25 @@ class NHSEnglishPrescriptions(DataSourceConfig):
         Returns:
             List of table names generated from resource dates.
             Format: nhs_prescriptions_MM_YYYY
+            If start_month and end_month are set, filters to that date range
         """
         resources = self._fetch_api_resources()
 
         if not resources:
             raise ValueError("No NHS prescribing data resources available from API")
 
-        if self.time_range == TimeRange.LATEST:
+        # Filter by date range if specified
+        if self.start_month and self.end_month:
+            filtered_resources = []
+            for r in resources:
+                name = r.get("name", "")
+                if name.startswith("EPD_SNOMED_") and len(name) >= 17:
+                    date_str = name[11:17]  # Extract YYYYMM
+                    if len(date_str) == 6 and date_str.isdigit():
+                        if self.start_month <= date_str <= self.end_month:
+                            filtered_resources.append(r)
+            selected_resources = filtered_resources
+        elif self.time_range == TimeRange.LATEST:
             selected_resources = resources[:1]
         else:  # HISTORIC
             if self.max_months:
@@ -419,6 +449,56 @@ class NHSEnglishPrescriptions(DataSourceConfig):
             max_months=n_months,
         )
 
+    @classmethod
+    def create_date_range(
+        cls,
+        start_month: str,
+        end_month: str,
+        processor_type: DataProcessorType = DataProcessorType.MOTHERDUCK,
+        batch_limit: Optional[int] = 300000,
+    ) -> "NHSEnglishPrescriptions":
+        """
+        Create configuration for a specific date range of NHS prescribing data.
+
+        Args:
+            start_month: Start month in YYYYMM format (e.g., "202402" for Feb 2024)
+            end_month: End month in YYYYMM format (e.g., "202407" for Jul 2024)
+            processor_type: The type of data processor to use (default: MOTHERDUCK)
+            batch_limit: Optional limit for batch processing (default: 300000)
+
+        Returns:
+            NHSEnglishPrescriptions configured for the specified date range
+
+        Examples:
+            # Get data from February 2024 to July 2024
+            config = NHSEnglishPrescriptions.create_date_range("202402", "202407")
+
+            # Get data for a single month
+            config = NHSEnglishPrescriptions.create_date_range("202406", "202406")
+        """
+        from datetime import datetime
+
+        # Validate date format
+        try:
+            start_date = datetime.strptime(start_month, "%Y%m")
+            end_date = datetime.strptime(end_month, "%Y%m")
+        except ValueError as e:
+            raise ValueError(f"Invalid date format. Use YYYYMM (e.g., 202402): {e}")
+
+        if start_date > end_date:
+            raise ValueError(
+                f"Start month {start_month} is after end month {end_month}"
+            )
+
+        return cls(
+            processor_type=processor_type,
+            time_range=TimeRange.HISTORIC,
+            batch_limit=batch_limit,
+            max_months=None,
+            start_month=start_month,
+            end_month=end_month,
+        )
+
 
 if __name__ == "__main__":
     print("=" * 80)
@@ -427,9 +507,10 @@ if __name__ == "__main__":
 
     # Test 1: Latest configuration
     print("\n1. LATEST Configuration:")
-    config_latest = NHSEnglishPrescriptions.create_default()
+    config_latest = NHSEnglishPrescriptions.create_date_range('202408', '202502')
     print(f"   Schema: {config_latest.schema_name}")
     print(f"   Metadata Schema: {config_latest.metadata_schema_name}")
     print(f"   Number of tables: {len(config_latest.table_names)}")
     print(f"   Table names: {config_latest.table_names}")
     print(f"   Number of download links: {len(config_latest.download_links)}")
+    print(config_latest.download_links)
