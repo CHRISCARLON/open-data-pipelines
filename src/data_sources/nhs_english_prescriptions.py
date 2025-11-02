@@ -274,6 +274,7 @@ class NHSEnglishPrescriptions(DataSourceConfig):
         """
         Database template for NHS English Prescribing data.
         Based on the expected CSV structure.
+        Updated to match NHS schema as of February 2025.
         """
         return {
             "YEAR_MONTH": "VARCHAR",
@@ -290,15 +291,15 @@ class NHSEnglishPrescriptions(DataSourceConfig):
             "ADDRESS_3": "VARCHAR",
             "ADDRESS_4": "VARCHAR",
             "POSTCODE": "VARCHAR",
-            "BNF_CHEMICAL_SUBSTANCE_CODE": "VARCHAR",
             "BNF_CHEMICAL_SUBSTANCE": "VARCHAR",
-            "BNF_PRESENTATION_CODE": "VARCHAR",
-            "BNF_PRESENTATION_NAME": "VARCHAR",
+            "CHEMICAL_SUBSTANCE_BNF_DESCR": "VARCHAR",
+            "BNF_CODE": "VARCHAR",
+            "BNF_DESCRIPTION": "VARCHAR",
             "BNF_CHAPTER_PLUS_CODE": "VARCHAR",
             "QUANTITY": "DOUBLE",
             "ITEMS": "BIGINT",
             "TOTAL_QUANTITY": "DOUBLE",
-            "ADQ_USAGE": "DOUBLE",
+            "ADQUSAGE": "DOUBLE",
             "NIC": "DOUBLE",
             "ACTUAL_COST": "DOUBLE",
             "UNIDENTIFIED": "VARCHAR",
