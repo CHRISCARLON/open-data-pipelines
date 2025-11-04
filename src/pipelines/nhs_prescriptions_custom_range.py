@@ -17,11 +17,12 @@ def main():
         raise ValueError("MOTHERDUCK_TOKEN and MOTHERDB_2 must be set")
 
     START_MONTH = "202408"  
-    END_MONTH = "202412"    
+    END_MONTH = "202408"    
 
     config = NHSEnglishPrescriptions.create_date_range(START_MONTH, END_MONTH)
 
     logger.info(f"Processing NHS prescriptions from {START_MONTH} to {END_MONTH}")
+    logger.info(f"Download links: {config.download_links}")
     logger.info(f"Schema: {config.schema_name}")
     logger.info(f"Tables to process: {len(config.table_names)}")
     logger.info(f"Table names: {', '.join(config.table_names)}")
