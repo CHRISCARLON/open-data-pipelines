@@ -6,7 +6,6 @@ from .data_source_config import (
     DataSourceConfig,
 )
 from loguru import logger
-import os
 
 
 class CadentUndergroundPipes(DataSourceConfig):
@@ -56,23 +55,12 @@ class CadentUndergroundPipes(DataSourceConfig):
     def download_links(self):
         """
         Get the download links for Cadent underground pipes data.
-        Returns the direct API endpoint for the parquet data with API key.
+        Returns the direct API endpoint for the parquet data.
+        Note: API key is handled by the processor via CADENT_API_KEY env var and sent as header.
         """
-        # Get API key from environment variable
-        api_key = os.getenv("CADENT")
-
-        if not api_key:
-            logger.warning("CADENT_API_KEY environment variable not found")
-            # Return base URL without API key as fallback
-            raise ValueError("CADENT_API_KEY environment variable not found")
-
-        # Add API key as query parameter
         base_url = self.base_url
-        separator = "&" if "?" in base_url else "?"
-        url_with_key = f"{base_url}{separator}apikey={api_key}"
-
-        logger.info("Using Cadent API with API key")
-        return [url_with_key]
+        logger.info(f"Using Cadent API endpoint: {base_url}")
+        return [base_url]
 
     @property
     def schema_name(self) -> str:
@@ -87,16 +75,24 @@ class CadentUndergroundPipes(DataSourceConfig):
     @property
     def db_template(self) -> dict:
         """Database schema template for Cadent underground pipes data."""
+        # Column names match CSV exactly (with spaces) + WKT geometry columns
         return {
-            "unique_id": "VARCHAR",
-            "geo_point": "VARCHAR",
-            "geo_shape": "VARCHAR",
-            "pipe_material": "VARCHAR",
-            "pipe_orientation": "VARCHAR",
-            "pipe_diameter": "VARCHAR",
-            "pressure_tier": "VARCHAR",
-            "main_or_service": "VARCHAR",
-            "shape_length": "VARCHAR",
+            "Geo Point": "VARCHAR",
+            "Geo Shape": "VARCHAR",
+            "TYPE": "VARCHAR",
+            "PRESSURE": "VARCHAR",
+            "MATERIAL": "VARCHAR",
+            "DIAMETER": "VARCHAR",
+            "DIAM_UNIT": "VARCHAR",
+            "CARR_MAT": "VARCHAR",
+            "CARR_DIA": "VARCHAR",
+            "CARR_DI_UN": "VARCHAR",
+            "ASSET_ID": "VARCHAR",
+            "DEPTH": "VARCHAR",
+            "AG_IND": "VARCHAR",
+            "INST_DATE": "VARCHAR",
+            "geo_point_wkt": "VARCHAR",  # WKT version of Geo Point
+            "geo_shape_wkt": "VARCHAR",  # WKT version of Geo Shape
         }
 
     def __str__(self) -> str:
@@ -118,7 +114,7 @@ class CadentUndergroundPipes(DataSourceConfig):
         return cls(
             processor_type=DataProcessorType.MOTHERDUCK,
             time_range=TimeRange.LATEST,
-            batch_limit=150000,
+            batch_limit=200000,
         )
 
 

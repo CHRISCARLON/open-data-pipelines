@@ -61,7 +61,7 @@ class MotherDuckManager(DatabaseProtocolTrait):
             return False
 
         column_defs = ",\n                ".join(
-            [f"{col_name} {col_type}" for col_name, col_type in columns.items()]
+            [f'"{col_name}" {col_type}' for col_name, col_type in columns.items()]
         )
         logger.info(f"Creating table {schema}.{table} with columns: {column_defs}")
 
@@ -98,7 +98,7 @@ class MotherDuckManager(DatabaseProtocolTrait):
 
         # Build column definitions from dictionary
         column_defs = ",\n                ".join(
-            [f"{col_name} {col_type}" for col_name, col_type in columns.items()]
+            [f'"{col_name}" {col_type}' for col_name, col_type in columns.items()]
         )
         logger.info(f"Creating table {schema}.{table} with columns: {column_defs}")
 

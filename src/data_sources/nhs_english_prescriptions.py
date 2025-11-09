@@ -508,7 +508,7 @@ if __name__ == "__main__":
 
     # Test 1: Latest configuration
     print("\n1. LATEST Configuration:")
-    config_latest = NHSEnglishPrescriptions.create_date_range('202408', '202502')
+    config_latest = NHSEnglishPrescriptions.create_date_range("202408", "202502")
     print(f"   Schema: {config_latest.schema_name}")
     print(f"   Metadata Schema: {config_latest.metadata_schema_name}")
     print(f"   Number of tables: {len(config_latest.table_names)}")

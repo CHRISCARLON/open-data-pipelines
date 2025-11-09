@@ -1,0 +1,31 @@
+name: Cadent Underground Pipes
+
+on:
+  schedule:
+    - cron: "0 2 20 * *"
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "pyproject.toml"
+
+      - name: Install the project
+        run: uv sync --no-cache
+
+      - name: Run cadent underground pipeline
+        run: uv run -m src.pipelines.cadent_underground
+        env:
+          MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          MOTHERDB: ${{ secrets.MOTHERDB }}
+          CADENT_API_KEY: ${{ secrets.CADENT_API_KEY }}

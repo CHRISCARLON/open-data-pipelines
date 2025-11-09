@@ -54,7 +54,7 @@ class DataSourceType(Enum):
     )
     CADENT_GAS = (
         "cadent_gas_underground_pipes",
-        "https://cadentgas.opendatasoft.com/api/explore/v2.1/catalog/datasets/gpi-pipe-infrastructure-open/exports/parquet",
+        "https://cadentgas.opendatasoft.com/api/explore/v2.1/catalog/datasets/gas-pipe-infrastructure-gpi_open/exports/csv?lang=en&timezone=Europe%2FLondon&use_labels=true&delimiter=%2C",
     )
     BUILT_UP_AREAS = (
         "built_up_areas",
