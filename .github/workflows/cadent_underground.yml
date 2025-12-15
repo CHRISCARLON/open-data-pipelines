@@ -1,6 +1,7 @@
 name: Cadent Underground Pipes
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: "0 2 20 * *"
 
