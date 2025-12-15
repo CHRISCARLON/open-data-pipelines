@@ -147,26 +147,28 @@ def stream_csv_from_url(
                     if header is None:
                         header = next(csv.reader([line]))
 
-                        if header and header[0].startswith('\ufeff'):
-                            header[0] = header[0].replace('\ufeff', '')
-                            logger.info(f"Stripped BOM from first column")
+                        if header and header[0].startswith("\ufeff"):
+                            header[0] = header[0].replace("\ufeff", "")
+                            logger.info("Stripped BOM from first column")
 
                         logger.info(f"CSV Headers: {header}")
                         logger.debug(f"Header repr: {[repr(h) for h in header]}")
 
                         if expected_columns:
-                            logger.info(f"Expected columns: {list(expected_columns.keys())}")
+                            logger.info(
+                                f"Expected columns: {list(expected_columns.keys())}"
+                            )
                             is_valid, issues = validate_column_names(
                                 header, expected_columns
                             )
 
                             if not is_valid:
-                                logger.error(f"Column validation failed:")
+                                logger.error("Column validation failed:")
                                 for issue in issues:
                                     logger.error(f"  - {issue}")
                                 logger.warning("Proceeding despite column mismatch")
                             else:
-                                logger.info(f"✓ Column validation passed")
+                                logger.info("✓ Column validation passed")
 
                     else:
                         try:
@@ -238,6 +240,7 @@ def process_streaming_csv(
 
             try:
                 if "Geo Point" in df_batch.columns:
+
                     def point_to_wkt(point_str):
                         if pd.isna(point_str) or not point_str:
                             return None
@@ -246,14 +249,17 @@ def process_streaming_csv(
                             if len(parts) == 2:
                                 lat = float(parts[0].strip())
                                 lon = float(parts[1].strip())
-                                return Point(lon, lat).wkt 
+                                return Point(lon, lat).wkt
                         except Exception:
                             pass
                         return None
 
-                    df_batch["geo_point_wkt"] = df_batch["Geo Point"].apply(point_to_wkt)
+                    df_batch["geo_point_wkt"] = df_batch["Geo Point"].apply(
+                        point_to_wkt
+                    )
 
                 if "Geo Shape" in df_batch.columns:
+
                     def geojson_to_wkt(geojson_str):
                         if pd.isna(geojson_str) or not geojson_str:
                             return None
@@ -265,19 +271,35 @@ def process_streaming_csv(
                             pass
                         return None
 
-                    df_batch["geo_shape_wkt"] = df_batch["Geo Shape"].apply(geojson_to_wkt)
+                    df_batch["geo_shape_wkt"] = df_batch["Geo Shape"].apply(
+                        geojson_to_wkt
+                    )
 
                 # Log sample geometry data after first conversion - just to check it works
                 if batch_count == 1 and len(df_batch) > 0:
                     logger.info("Sample geometry conversion:")
-                    logger.info(f"DataFrame columns after WKT conversion: {list(df_batch.columns)}")
+                    logger.info(
+                        f"DataFrame columns after WKT conversion: {list(df_batch.columns)}"
+                    )
                     sample_row = df_batch.iloc[0]
-                    if "Geo Point" in df_batch.columns and "geo_point_wkt" in df_batch.columns:
-                        logger.info(f"  Geo Point (original): {sample_row['Geo Point'][:100]}...")
+                    if (
+                        "Geo Point" in df_batch.columns
+                        and "geo_point_wkt" in df_batch.columns
+                    ):
+                        logger.info(
+                            f"  Geo Point (original): {sample_row['Geo Point'][:100]}..."
+                        )
                         logger.info(f"  geo_point_wkt: {sample_row['geo_point_wkt']}")
-                    if "Geo Shape" in df_batch.columns and "geo_shape_wkt" in df_batch.columns:
-                        logger.info(f"  Geo Shape (original): {sample_row['Geo Shape'][:150]}...")
-                        logger.info(f"  geo_shape_wkt: {sample_row['geo_shape_wkt'][:200]}...")
+                    if (
+                        "Geo Shape" in df_batch.columns
+                        and "geo_shape_wkt" in df_batch.columns
+                    ):
+                        logger.info(
+                            f"  Geo Shape (original): {sample_row['Geo Shape'][:150]}..."
+                        )
+                        logger.info(
+                            f"  geo_shape_wkt: {sample_row['geo_shape_wkt'][:200]}..."
+                        )
 
                 df_batch = df_batch.astype(str).replace("nan", None)
 
