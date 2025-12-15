@@ -54,6 +54,7 @@ WHERE work_status_ref = 'completed'
   AND actual_start_date_time IS NOT NULL
   AND actual_end_date_time IS NOT NULL
   AND works_location_coordinates IS NOT NULL
+  AND highway_authority_swa_code = '4720'
 ORDER BY permit_reference_number, actual_start_date_time
 ),
 in_progress_major_works AS (
@@ -94,6 +95,7 @@ WHERE work_status_ref = 'in_progress'
   AND work_category_ref = 'major'
   AND actual_start_date_time IS NOT NULL
   AND works_location_coordinates IS NOT NULL
+  AND highway_authority_swa_code = '4720'
   AND permit_reference_number NOT IN (
     SELECT permit_reference_number
     FROM {{ current_schema }}.{{ current_table }}
