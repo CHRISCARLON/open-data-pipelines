@@ -1,7 +1,8 @@
 from typing import Any, Dict, List, Optional
 
 import requests
-from data_source_config import (
+
+from .data_source_config import (
     DataProcessorType,
     DataSourceConfig,
     DataSourceType,

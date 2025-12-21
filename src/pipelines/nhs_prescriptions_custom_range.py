@@ -10,7 +10,7 @@ from ..databases.motherduck import MotherDuckManager
 
 def main():
     """
-    Pipeline to process a specific date range of NHS English Prescriptions data.
+    Pipeline to process a specific date range of NHS English Prescriptions data
     """
     if not (token := os.getenv("MOTHERDUCK_TOKEN")) or not (
         database := os.getenv("MOTHERDB_2")
