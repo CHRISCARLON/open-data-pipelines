@@ -3,9 +3,7 @@ name: NHS Prescriptions
 on:
   push:
     paths:
-      - 'src/pipelines/nhs_prescriptions_custom_range.py'
-      - 'src/data_sources/nhs_english_prescriptions.py'
-      - 'src/data_processors/nhs_english_prescriptions.py'
+      - "src/pipelines/nhs_prescriptions_custom_range.py"
   workflow_dispatch:
 
 jobs:

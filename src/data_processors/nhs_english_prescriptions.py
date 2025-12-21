@@ -1,10 +1,12 @@
 import csv
+import time
+from typing import Dict, Iterator, List, Optional, Tuple
+
 import pyarrow as pa
-from typing import Iterator, List, Dict, Tuple, Optional
 import requests
 from loguru import logger
 from tqdm import tqdm
-import time
+
 from ..data_processors.utils.metadata_logger import metadata_tracker
 from ..data_sources.data_source_config import DataSourceConfig
 
@@ -144,7 +146,7 @@ def stream_csv_from_url(
                     text_chunk = partial_line + text_chunk
                     lines = text_chunk.split("\n")
                     partial_line = lines[-1]
-                    lines = lines[:-1]
+                    lines = lines[:-1]  # THIS HANDLES PARTIAL LINES DON'T FORGET!!
 
                     for line in lines:
                         if not line.strip():
@@ -331,13 +333,22 @@ def process_nhs_prescriptions(
         conn: Database connection
         schema_name: Schema name
         expected_columns: Dict of expected column names and types for validation
-        config: Data source configuration (enables metadata logging if provided)
+            (fallback if config.get_table_template is not available)
+        config: Data source configuration (enables metadata logging and
+            date-aware schema selection if provided)
     """
     if len(download_links) != len(table_names):
-        raise ValueError("Number of download links must match number of table names")
+        raise ValueError(
+            "Number of download links must match the number of table names"
+        )
 
     for csv_url, table_name in zip(download_links, table_names):
         logger.info(f"Processing {table_name} from {csv_url}")
+
+        table_expected_columns = expected_columns
+        if config and hasattr(config, "get_table_template"):
+            table_expected_columns = config.get_table_template(table_name)
+            logger.info(f"Using date-specific schema for {table_name}")
 
         if config:
             with metadata_tracker(config, conn, csv_url) as tracker:
@@ -348,7 +359,7 @@ def process_nhs_prescriptions(
                         conn=conn,
                         schema_name=schema_name,
                         table_name=table_name,
-                        expected_columns=expected_columns,
+                        expected_columns=table_expected_columns,
                         tracker=tracker,
                     )
 
@@ -372,7 +383,7 @@ def process_nhs_prescriptions(
                     conn=conn,
                     schema_name=schema_name,
                     table_name=table_name,
-                    expected_columns=expected_columns,
+                    expected_columns=table_expected_columns,
                 )
 
                 logger.success(f"Completed processing table: {table_name}")

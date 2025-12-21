@@ -1,10 +1,11 @@
 import os
 
-from ..databases.motherduck import MotherDuckManager
-from ..data_sources.nhs_english_prescriptions import NHSEnglishPrescriptions
-from ..data_processors.utils.metadata_logger import ensure_metadata_schema_exists
-from ..data_processors.nhs_english_prescriptions import process_nhs_prescriptions
 from loguru import logger
+
+from ..data_processors.nhs_english_prescriptions import process_nhs_prescriptions
+from ..data_processors.utils.metadata_logger import ensure_metadata_schema_exists
+from ..data_sources.nhs_english_prescriptions import NHSEnglishPrescriptions
+from ..databases.motherduck import MotherDuckManager
 
 
 def main():
@@ -16,8 +17,8 @@ def main():
     ):
         raise ValueError("MOTHERDUCK_TOKEN and MOTHERDB_2 must be set")
 
-    START_MONTH = "202408"
-    END_MONTH = "202408"
+    START_MONTH = "202508"
+    END_MONTH = "202510"
 
     config = NHSEnglishPrescriptions.create_date_range(START_MONTH, END_MONTH)
 

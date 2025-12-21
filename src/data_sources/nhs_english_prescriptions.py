@@ -1,10 +1,11 @@
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
+
 import requests
-from .data_source_config import (
+from data_source_config import (
     DataProcessorType,
+    DataSourceConfig,
     DataSourceType,
     TimeRange,
-    DataSourceConfig,
 )
 
 
@@ -269,12 +270,13 @@ class NHSEnglishPrescriptions(DataSourceConfig):
         """
         return "nhs_prescribing_raw_data"
 
+    # Schema change cutoff: Feb 2025 and earlier use old schema, March 2025+ use new schema
+    SCHEMA_CHANGE_CUTOFF = "202502"
+
     @property
-    def db_template(self) -> dict:
+    def db_template_legacy(self) -> dict:
         """
-        Database template for NHS English Prescribing data.
-        Based on the expected CSV structure.
-        Updated to match NHS schema as of February 2025.
+        Database template for NHS English Prescribing data (Feb 2025 and earlier).
         """
         return {
             "YEAR_MONTH": "VARCHAR",
@@ -306,17 +308,86 @@ class NHSEnglishPrescriptions(DataSourceConfig):
             "SNOMED_CODE": "BIGINT",
         }
 
+    @property
+    def db_template_current(self) -> dict:
+        """
+        Database template for NHS English Prescribing data (March 2025 onwards).
+        """
+        return {
+            "YEAR_MONTH": "VARCHAR",
+            "REGIONAL_OFFICE_NAME": "VARCHAR",
+            "REGIONAL_OFFICE_CODE": "VARCHAR",
+            "ICB_NAME": "VARCHAR",
+            "ICB_CODE": "VARCHAR",
+            "PCO_NAME": "VARCHAR",
+            "PCO_CODE": "VARCHAR",
+            "PRACTICE_NAME": "VARCHAR",
+            "PRACTICE_CODE": "VARCHAR",
+            "ADDRESS_1": "VARCHAR",
+            "ADDRESS_2": "VARCHAR",
+            "ADDRESS_3": "VARCHAR",
+            "ADDRESS_4": "VARCHAR",
+            "POSTCODE": "VARCHAR",
+            "BNF_CHEMICAL_SUBSTANCE_CODE": "VARCHAR",
+            "BNF_CHEMICAL_SUBSTANCE": "VARCHAR",
+            "BNF_PRESENTATION_CODE": "VARCHAR",
+            "BNF_PRESENTATION_NAME": "VARCHAR",
+            "BNF_CHAPTER_PLUS_CODE": "VARCHAR",
+            "QUANTITY": "DOUBLE",
+            "ITEMS": "BIGINT",
+            "TOTAL_QUANTITY": "DOUBLE",
+            "ADQ_USAGE": "DOUBLE",
+            "NIC": "DOUBLE",
+            "ACTUAL_COST": "DOUBLE",
+            "UNIDENTIFIED": "VARCHAR",
+            "SNOMED_CODE": "BIGINT",
+        }
+
+    @property
+    def db_template(self) -> dict:
+        """
+        Database template for NHS English Prescribing data.
+        Returns the current (post-Feb 2025) schema by default.
+        Use get_template_for_date() or get_table_template() for date-specific templates.
+        """
+        return self.db_template_current
+
+    def get_template_for_date(self, date_str: str) -> dict:
+        """
+        Get the appropriate database template for a given date.
+
+        Args:
+            date_str: Date in YYYYMM format (e.g., "202502" for Feb 2025)
+
+        Returns:
+            The appropriate database template for that date
+        """
+        if date_str <= self.SCHEMA_CHANGE_CUTOFF:
+            return self.db_template_legacy
+        return self.db_template_current
+
     def get_table_template(self, table_name: str) -> dict:
         """
         Get the database template for a specific table.
 
         Args:
-            table_name: The name of the table
+            table_name: The name of the table (format: nhs_prescriptions_MM_YYYY)
 
         Returns:
-            Database template dictionary (same for all NHS prescription tables)
+            Database template dictionary appropriate for the table's date
         """
-        return self.db_template
+        # Extract date from table name (e.g., nhs_prescriptions_02_2025 -> 202502)
+        try:
+            parts = table_name.split("_")
+            if len(parts) >= 4 and parts[0] == "nhs" and parts[1] == "prescriptions":
+                month = parts[2]
+                year = parts[3]
+                date_str = f"{year}{month}"
+                return self.get_template_for_date(date_str)
+        except (IndexError, ValueError):
+            pass
+        # Default to current template if we can't parse the table name
+        return self.db_template_current
 
     @property
     def metadata_schema_name(self) -> str:
@@ -379,6 +450,34 @@ class NHSEnglishPrescriptions(DataSourceConfig):
             f"schema_name={self.schema_name}, "
             f"table_names={self.table_names})"
         )
+
+    def __repr__(self) -> str:
+        """Show all attributes including properties."""
+        attrs = {}
+
+        # Instance variables (from __init__)
+        for k, v in vars(self).items():
+            key = k.lstrip("_")
+            if hasattr(v, "value"):
+                attrs[key] = v.value
+            elif hasattr(v, "code"):
+                attrs[key] = v.code
+            else:
+                attrs[key] = v
+
+        # Properties (defined with @property)
+        for name in dir(self.__class__):
+            if isinstance(getattr(self.__class__, name, None), property):
+                if not name.startswith("_"):
+                    try:
+                        attrs[name] = getattr(self, name)
+                    except Exception:
+                        attrs[name] = "<error>"
+
+        attrs["SCHEMA_CHANGE_CUTOFF"] = self.SCHEMA_CHANGE_CUTOFF
+
+        attrs_str = ",\n    ".join(f"{k}={v!r}" for k, v in sorted(attrs.items()))
+        return f"NHSEnglishPrescriptions(\n    {attrs_str}\n)"
 
     @classmethod
     def create_default(cls) -> "NHSEnglishPrescriptions":
@@ -502,16 +601,5 @@ class NHSEnglishPrescriptions(DataSourceConfig):
 
 
 if __name__ == "__main__":
-    print("=" * 80)
-    print("Testing NHS English Prescriptions Configuration")
-    print("=" * 80)
-
-    # Test 1: Latest configuration
-    print("\n1. LATEST Configuration:")
-    config_latest = NHSEnglishPrescriptions.create_date_range("202408", "202502")
-    print(f"   Schema: {config_latest.schema_name}")
-    print(f"   Metadata Schema: {config_latest.metadata_schema_name}")
-    print(f"   Number of tables: {len(config_latest.table_names)}")
-    print(f"   Table names: {config_latest.table_names}")
-    print(f"   Number of download links: {len(config_latest.download_links)}")
-    print(config_latest.download_links)
+    config = NHSEnglishPrescriptions.create_date_range("202508", "202510")
+    print(repr(config))
